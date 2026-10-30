@@ -1,5 +1,6 @@
 import { Languages, ShieldCheck } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { api, useResource } from "../api";
 import {
   Badge,
@@ -57,8 +58,12 @@ export function Glossary() {
         description="교과 개념이 번역 속에서 달라지지 않도록, 참고 대역과 비교해요."
       />
       <Notice>
-        {data.notice} 현재 검사는 문자열 비교입니다. 맥락을 분석하는 오역 탐지
-        AI는 연결되지 않았습니다.
+        {data.notice} 이 화면은 문자열 비교입니다. 문서의 맥락과 이미지 대역표를
+        함께 검토하려면{" "}
+        <Link to="/app/materials/translation-review">
+          수업 자료의 오역 탐지 (L2)
+        </Link>
+        를 사용하세요.
       </Notice>
       <div className="glossary-layout">
         <section className="panel">

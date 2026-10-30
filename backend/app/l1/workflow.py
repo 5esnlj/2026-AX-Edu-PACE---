@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .models import LearnerProfile, ReconstructionEdits, ReconstructionOutput
 from ..agents import GLOSSARY, LANGUAGES
+from ..glossary_data import REFERENCE_GLOSSARY
 
 ROOT = Path(__file__).resolve().parent
 RULES = json.loads((ROOT / "data/reconstruction_rules.json").read_text(encoding="utf-8"))
@@ -48,6 +49,15 @@ def prepare_request(profile: LearnerProfile, source: str, subject: str, title: s
     if sp and (sp.uncertain or sp.recheck_required or sp.uncertainty_flags):
         notes.append("선택 교과의 진단에 불확실성·재확인 표시가 있습니다. 확정 단계로 사용하지 않습니다.")
     cues = list(dict.fromkeys(re.findall(r"첫째|둘째|셋째|마지막으로|순서|단계|과정|절차|목록|비교|공통점|차이점", source)))
+    lexicon = copy.deepcopy(LEXICON)
+    registered = {e["term"] for e in lexicon["entries"]}
+    lexicon["entries"].extend({"term": e["term"], "translations": e["translations"],
+        "verification": REFERENCE_GLOSSARY["verification"], "source": REFERENCE_GLOSSARY["source"]}
+        for e in REFERENCE_GLOSSARY["entries"] if e["term"] not in registered)
+    lexicon["description"] = "어휘 위계 사전과 이미지 참고 대역을 함께 제공합니다. 이미지에는 위계·숙달도 근거가 없습니다."
+    lexicon["translation_languages"] = REFERENCE_GLOSSARY["languages"]
+    if any(e["term"] in source for e in REFERENCE_GLOSSARY["entries"]):
+        notes.append(REFERENCE_GLOSSARY["notice"])
     return {
         "learner_profile": safe_profile,
         "profile_source": profile_source,
@@ -55,7 +65,7 @@ def prepare_request(profile: LearnerProfile, source: str, subject: str, title: s
         "subject": subject, "source_name": title, "source_text": source,
         "source_sentences": split_sentences(source),
         "source_signals": {"possible_process_or_list": bool(cues), "matched_cues": cues, "note": "문자 기반 참고 신호로, 최종 판단 근거가 아닙니다."},
-        "reconstruction_rules": RULES, "vocabulary_lexicon": LEXICON,
+        "reconstruction_rules": RULES, "vocabulary_lexicon": lexicon,
         "vocabulary_state": vocabulary_state or {},
         "host_capabilities": {"text_pdf": True, "ocr": False, "tts": True, "handwriting": False,
                               "visual_aids": ["sequence", "list", "comparison", "venn", "other"]},
@@ -200,12 +210,14 @@ def demo_output(request: dict) -> ReconstructionOutput:
     if len(sources) > 60 or any(len(s["source"]) > 4000 for s in sources):
         raise ValueError("L1 데모에서는 문장 60개 이하, 문장당 4,000자 이하의 원문을 사용해 주세요.")
     language = request["learner_profile"]["native_language"]
-    code = next((code for code, label in LANGUAGES.items() if label == language), None)
+    language_labels = {**LANGUAGES, **REFERENCE_GLOSSARY["languages"]}
+    code = next((code for code, label in language_labels.items() if label == language), None)
+    glossary = GLOSSARY + [{"term": e["term"], "meaning": "", "translations": e["translations"]} for e in REFERENCE_GLOSSARY["entries"]]
     vocabulary = [dict(term=t["term"], tier="unknown_needs_teacher", category="unknown",
         source_sentence_ids=[s["id"] for s in sources if t["term"] in s["source"]], action="review",
         simple_meaning=t["meaning"], native_language=language or "", translation=t["translations"].get(code, ""),
         translation_status="review", tts_text=t["term"])
-        for t in GLOSSARY if t["term"] in request["source_text"]]
+        for t in glossary if t["term"] in request["source_text"]]
     return ReconstructionOutput.model_validate({
         "status": "teacher_review_required", "document": {"subject": request["subject"]},
         "learner_decision": {"native_language": language or "", "methods_selected": ["bilingual"] if language else [],
