@@ -6,7 +6,7 @@
       210,
       211
     ],
-    "source_pdf": "docs/civil-trial-source.pdf"
+    "source_pdf": "public/examples/civil-trial-source.pdf"
   },
   "note": "public/convert/view.html 시연 화면이 쓰는 데이터를 그대로 옮긴 예시. 모국어 대역은 원어민 검증 전. official_glossary는 팀 공식 대역표 값. blocks.sw = [원래 표현, 바꾼 표현, 적용 재구성본(l2·l4·l5)]",
   "groups": {

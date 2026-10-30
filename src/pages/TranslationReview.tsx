@@ -16,7 +16,8 @@ import type {
   TranslationGlossary,
   TranslationReport,
 } from "../translation-review";
-import { MaterialTools } from "./MaterialTools";
+import { ArrowLeft } from "lucide-react";
+import "../translation-review.css";
 
 type Form = {
   title: string;
@@ -185,7 +186,10 @@ export function TranslationReview() {
   if (!glossary.data) return <Loading />;
   return (
     <>
-      <MaterialTools />
+      <Link to="/app/materials" className="back-link">
+        <ArrowLeft size={16} />
+        수업 자료로 돌아가기
+      </Link>
       <PageHeading
         eyebrow="우리 반 수업 자료 · Level 2"
         title="수업 자료 오역 탐지"

@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { BookOpen, FileText, ArrowRight } from "lucide-react";
 import { api, useResource } from "../api";
-import { ErrorState, Loading, useToast } from "../components";
+import { Badge, ErrorState, Loading, useToast } from "../components";
 import type { ReadingSupport } from "../l1";
 import type { Student } from "../types";
 import "../reconstruction-support.css";
@@ -17,23 +17,39 @@ export type CivilTrialExample = {
   profiles: { label: string; profile: Record<string, unknown> }[];
 };
 
+export const CIVIL_TRIAL_TITLE = "민사 재판의 의미와 소송 대리인의 역할";
+
 export function CivilTrialCard() {
   return (
-    <section className="civil-example-card">
-      <div className="civil-example-icon">
-        <BookOpen size={28} />
+    <Link
+      className="material-card"
+      to="/app/create?example=civil-trial"
+      aria-label="민사 재판 예시로 만들기"
+    >
+      <div className="material-cover cover-사회">
+        <div className="cover-caption">가나다계단 CLASSROOM</div>
+        <div className="cover-art">
+          <BookOpen size={48} />
+          <span>✦</span>
+        </div>
+        <span>사회 · 재판의 의미와 공정한 재판</span>
       </div>
-      <div>
-        <span className="civil-eyebrow">첨부 PDF로 시작하는 재구성</span>
-        <h2>같은 수업, 나에게 맞는 표현</h2>
-        <p>
-          민사 재판 210~211쪽 · 원본을 비교하고, 어려운 표현에 설명을 더해요.
-        </p>
+      <div className="material-card-body">
+        <div className="section-title">
+          <Badge tone="neutral">예시 자료</Badge>
+          <small>사회</small>
+        </div>
+        <h2>{CIVIL_TRIAL_TITLE}</h2>
+        <p>210~211쪽 PDF로 학생별 맞춤 자료를 만들어요.</p>
+        <div className="material-card-footer">
+          <span>
+            <FileText size={14} />
+            원본 PDF · 재구성 예시
+          </span>
+          <ArrowRight size={18} />
+        </div>
       </div>
-      <Link className="btn secondary" to="/app/create?example=civil-trial">
-        민사 재판 예시로 만들기 <ArrowRight size={16} />
-      </Link>
-    </section>
+    </Link>
   );
 }
 

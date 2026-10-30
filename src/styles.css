@@ -5097,25 +5097,6 @@ select:focus {
 .app-footer {
   color: #77798d;
 }
-.material-tools a {
-  color: #56607a;
-  border-color: #e1e1ec;
-}
-.material-tools a.active {
-  background: #4554bd;
-  border-color: #4554bd;
-  color: #fff;
-}
-.material-tools a:nth-child(2):not(.active) {
-  background: #fff1e7;
-  border-color: #f1dcc8;
-  color: #945313;
-}
-.material-tools a:nth-child(3):not(.active) {
-  background: #f2ecfc;
-  border-color: #e3d7f3;
-  color: #764c9a;
-}
 .stat-top {
   color: #596579;
   font-size: 13px;
@@ -5170,13 +5151,25 @@ select:focus {
   }
 }
 @media print {
-  .material-tools {
-    display: none !important;
-  }
   .welcome,
   .hero-banner,
   .about-hero {
     background: #fff;
     border-image: none;
   }
+}
+
+.material-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.material-actions .translation-action {
+  background: #f2ecfc;
+  border-color: #e3d7f3;
+  color: #69418e;
+}
+.material-actions .translation-action:hover {
+  background: #e9ddfa;
 }

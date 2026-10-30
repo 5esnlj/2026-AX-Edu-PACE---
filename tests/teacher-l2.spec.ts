@@ -7,10 +7,7 @@ async function enter(page: import("@playwright/test").Page) {
     .getByRole("navigation")
     .getByRole("link", { name: "수업 자료", exact: true })
     .click();
-  await page
-    .getByRole("navigation", { name: "수업 자료 기능 선택" })
-    .getByRole("link", { name: "오역 탐지 (L2)", exact: true })
-    .click();
+  await page.getByRole("link", { name: "오역 탐지", exact: true }).click();
 }
 
 test("teacher selects L2, resolves context, inspects evidence and reopens a saved report", async ({
@@ -113,7 +110,7 @@ test("existing materials load into L2 and student access is blocked", async ({
   await page.getByRole("button", { name: "데모 교실 입장하기" }).click();
   await page.goto("/app/materials");
   await expect(
-    page.getByRole("navigation", { name: "수업 자료 기능 선택" }),
+    page.getByRole("link", { name: "오역 탐지", exact: true }),
   ).toHaveCount(0);
   expect((await page.request.get("/api/translation-reviews")).status()).toBe(
     403,
