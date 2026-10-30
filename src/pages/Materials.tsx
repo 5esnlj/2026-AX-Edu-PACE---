@@ -38,6 +38,7 @@ import {
   SupportedReading,
   type CivilTrialExample,
 } from "./ReconstructionSupport";
+import { ConvertPage, isCivilVariant } from "../convert/ConvertPage";
 import { toL1Edits, type L1Edits } from "../l1";
 import {
   Avatar,
@@ -815,26 +816,32 @@ function ReviewMaterial({
         {variant.notice} 저자원 언어를 포함한 번역은 전문 검수되지 않았습니다.
         모든 학생의 번역과 글을 확인해야 배포할 수 있습니다.
       </Notice>
-      <div className="review-grid">
-        <section className="panel">
-          <SectionTitle title="원본 자료">
-            <Badge tone="neutral">원본 보존</Badge>
-          </SectionTitle>
-          {(variant.source_pdf_url ||
-            variant.reconstruction?.document?.source_pdf_url) && (
-            <SourcePdfPreview
-              url={
-                (variant.source_pdf_url ||
-                  variant.reconstruction?.document?.source_pdf_url)!
-              }
-            />
-          )}
-          <div className="original-text">
-            {item.source_text.split("\n").map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
-          </div>
-        </section>
+      <div
+        className={
+          isCivilVariant(variant) ? "review-grid cv-single" : "review-grid"
+        }
+      >
+        {!isCivilVariant(variant) && (
+          <section className="panel">
+            <SectionTitle title="원본 자료">
+              <Badge tone="neutral">원본 보존</Badge>
+            </SectionTitle>
+            {(variant.source_pdf_url ||
+              variant.reconstruction?.document?.source_pdf_url) && (
+              <SourcePdfPreview
+                url={
+                  (variant.source_pdf_url ||
+                    variant.reconstruction?.document?.source_pdf_url)!
+                }
+              />
+            )}
+            <div className="original-text">
+              {item.source_text.split("\n").map((p, i) => (
+                <p key={i}>{p}</p>
+              ))}
+            </div>
+          </section>
+        )}
         <section className="panel print-area">
           <SectionTitle
             title={`${students.find((s) => s.id === active)!.name}의 맞춤 자료`}
@@ -844,7 +851,43 @@ function ReviewMaterial({
               {variant.native_language || languages[variant.language]}
             </Badge>
           </SectionTitle>
-          {variant.reconstruction ? (
+          {isCivilVariant(variant) ? (
+            <>
+              <p className="muted">
+                원본 지면 그대로 학생에게 보이는 화면이에요. 밑줄·설명·쉬운
+                표현·그림을 누르면 펼쳐지고, 펼친 곳의 ‘수정하기’로 고칠 수
+                있어요. 지면 글자를 드래그하면 밑줄·설명·시각 자료를 직접 추가할
+                수 있어요.
+                {!variant.level &&
+                  " 이 학생은 아직 진단 전이라 중간 단계(읽기 3~4용)로 보여 줘요."}
+              </p>
+              <ConvertPage
+                mode="teacher"
+                reading={variant.level}
+                lang={variant.language}
+                langName={
+                  variant.native_language || languages[variant.language]
+                }
+                name={students.find((s) => s.id === active)!.name}
+                storageKey={`ganada-convert:${item.id}:${active}`}
+                onChange={() => setConfirmed(false)}
+              />
+              {variant.reconstruction && (
+                <details className="l1-card">
+                  <summary>에이전트 판단 근거 · 문장별 세부 편집</summary>
+                  <TeacherL1Review
+                    data={variant.reconstruction}
+                    edits={l1Edits[active]}
+                    readOnly={published || busy}
+                    onChange={(next) => {
+                      setL1Edits({ ...l1Edits, [active]: next });
+                      setConfirmed(false);
+                    }}
+                  />
+                </details>
+              )}
+            </>
+          ) : variant.reconstruction ? (
             <>
               <TeacherL1Review
                 data={variant.reconstruction}
@@ -1210,17 +1253,39 @@ function ReaderContent({
             <BookOpen size={19} />
           </div>
           <h2>{item.unit || item.title}</h2>
-          {variant.source_pdf_url && (
-            <SourcePdfPreview url={variant.source_pdf_url} />
-          )}
-          <div className="reading-body" style={{ fontSize: `${zoom * 19}px` }}>
-            <SupportedReading
-              key={`${original}-${variant.text}`}
-              text={text}
-              support={original ? [] : variant.reading_support}
+          {isCivilVariant(variant) ? (
+            <ConvertPage
+              mode="student"
+              reading={variant.level}
+              lang={variant.language}
+              langName={variant.native_language || languages[variant.language]}
+              name=""
+              storageKey={`ganada-convert:${item.id}:${studentId}`}
+              scale={zoom}
+              showOriginal={original}
+              known={learning.known}
+              onWord={(t, kind) => {
+                if (!learning[kind].includes(t)) word(t, kind);
+              }}
             />
-          </div>
-          {pictures && <ConceptCards variant={variant} />}
+          ) : (
+            <>
+              {variant.source_pdf_url && (
+                <SourcePdfPreview url={variant.source_pdf_url} />
+              )}
+              <div
+                className="reading-body"
+                style={{ fontSize: `${zoom * 19}px` }}
+              >
+                <SupportedReading
+                  key={`${original}-${variant.text}`}
+                  text={text}
+                  support={original ? [] : variant.reading_support}
+                />
+              </div>
+              {pictures && <ConceptCards variant={variant} />}
+            </>
+          )}
           <div className="reading-bottom">
             작은 이해가 모여, 큰 배움이 되어요. <span>✦</span>
           </div>
