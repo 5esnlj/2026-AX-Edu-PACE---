@@ -94,7 +94,11 @@ export function Materials() {
             : "선생님이 나에게 맞게 준비한 자료를 읽어 보세요."
         }
         action={
-          teacher && (
+          !teacher ? (
+            <Link className="btn" to="/app/self-study">
+              <Plus size={18} />내 자료로 공부하기
+            </Link>
+          ) : (
             <div className="material-actions">
               <Link className="btn" to="/app/create">
                 <Plus size={18} />
@@ -159,9 +163,15 @@ export function Materials() {
               </div>
               <div className="material-card-body">
                 <div className="section-title">
-                  <Badge tone={m.status === "published" ? "green" : "orange"}>
-                    {statusLabels[m.status]}
-                  </Badge>
+                  {m.id.startsWith("self-") ? (
+                    <Badge tone="neutral">
+                      {teacher ? "학생 자기주도" : "내가 넣은 자료"}
+                    </Badge>
+                  ) : (
+                    <Badge tone={m.status === "published" ? "green" : "orange"}>
+                      {statusLabels[m.status]}
+                    </Badge>
+                  )}
                   <small>{m.subject}</small>
                 </div>
                 <h2>{m.title}</h2>
