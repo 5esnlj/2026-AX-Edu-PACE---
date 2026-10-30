@@ -38,6 +38,9 @@ def initialize(path: str):
         CREATE TABLE IF NOT EXISTS sessions (
           token TEXT PRIMARY KEY, role TEXT NOT NULL, student_id TEXT REFERENCES students(id), created_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS l1_profiles (
+          student_id TEXT PRIMARY KEY REFERENCES students(id), profile TEXT NOT NULL, updated_at TEXT NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS materials (
           id TEXT PRIMARY KEY, title TEXT NOT NULL, subject TEXT NOT NULL, unit TEXT NOT NULL,
           source_text TEXT NOT NULL, modes TEXT NOT NULL, targets TEXT NOT NULL,
