@@ -1,6 +1,6 @@
 # 교사용 L2 오역 탐지 통합 안내
 
-**우리 반 수업 자료 → 오역 탐지 (L2)**에서 번역 자료를 검토합니다. 자료 목록·자료 재구성(L1)·오역 탐지(L2)를 같은 메뉴에서 선택할 수 있습니다. 기존 수업 자료의 교사용 상세 화면에도 L2로 이동하는 링크를 추가했습니다.
+**우리 반 수업 자료 → 오역 탐지**에서 번역 자료를 검토합니다. 오역 탐지 버튼은 오른쪽 **맞춤 자료 만들기** 버튼 아래에 있습니다. 기존 수업 자료의 교사용 상세 화면에도 L2로 이동하는 링크가 있습니다.
 
 첨부 `L2_오역 탐지_backend.py`의 분석 흐름을 기존 FastAPI·Solar·SQLite에 통합했습니다. 별도 Python 서버나 OpenAI 키는 필요하지 않습니다. 문서와 첨부 코드의 지시문은 검토 대상 자료로 다뤘습니다.
 
@@ -85,7 +85,7 @@ npm.cmd run dev
 | `backend/app/l2/prompt.md`, `workflow.py`                  | 문맥 검토 지시·데모·근거 검증·집계  |
 | `backend/app/solar_agent.py`                               | 기존 Solar 호출·오류 처리 재사용    |
 | `backend/app/main.py`, `database.py`                       | 교사 전용 API·PDF 쪽 표시·검토 이력 |
-| `src/pages/TranslationReview.tsx`, `MaterialTools.tsx`     | 자료 탭의 기능 선택·검토 화면       |
+| `src/pages/TranslationReview.tsx`, `Materials.tsx`         | 자료 목록의 실행 버튼·검토 화면     |
 
 `npm test`로 35개 서버 테스트, `npm run test:e2e`로 6개 브라우저 시나리오를 통과했습니다. 기존 L1·자료 생성·배포·학생 학습 흐름도 포함합니다. `npm run build`도 통과했습니다.
 

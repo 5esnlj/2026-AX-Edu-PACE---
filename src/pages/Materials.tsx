@@ -30,8 +30,8 @@ import {
 } from "react-router-dom";
 import { api, useResource, useAgentHealth } from "../api";
 import { TeacherL1Review } from "./TeacherL1";
-import { MaterialTools } from "./MaterialTools";
 import {
+  CIVIL_TRIAL_TITLE,
   CivilTrialCard,
   CivilTrialLoader,
   SourcePdfPreview,
@@ -67,10 +67,17 @@ export function Materials() {
   const [search, setSearch] = useState("");
   const [subject, setSubject] = useState("전체");
   const teacher = user!.role === "teacher";
+  const visibleMaterials = (data || []).filter(
+    (m) =>
+      (subject === "전체" || m.subject === subject) && m.title.includes(search),
+  );
+  const showCivilExample =
+    teacher &&
+    (subject === "전체" || subject === "사회") &&
+    CIVIL_TRIAL_TITLE.includes(search);
   if (error) return <ErrorState message={error} retry={reload} />;
   return (
     <>
-      {teacher && <MaterialTools />}
       <PageHeading
         eyebrow="배움을 잇는 자료실"
         title={teacher ? "우리 반 수업 자료" : "나의 수업 자료"}
@@ -81,14 +88,22 @@ export function Materials() {
         }
         action={
           teacher && (
-            <Link className="btn" to="/app/create">
-              <Plus size={18} />
-              맞춤 자료 만들기
-            </Link>
+            <div className="material-actions">
+              <Link className="btn" to="/app/create">
+                <Plus size={18} />
+                맞춤 자료 만들기
+              </Link>
+              <Link
+                className="btn secondary translation-action"
+                to="/app/materials/translation-review"
+              >
+                <Languages size={18} />
+                오역 탐지
+              </Link>
+            </div>
           )
         }
       />
-      {teacher && <CivilTrialCard />}
       <div className="toolbar">
         <div className="filter-tabs">
           {["전체", "사회", "과학", "수학", "국어"].map((s) => (
@@ -115,71 +130,61 @@ export function Materials() {
         <Loading />
       ) : (
         <div className="material-grid">
-          {data!
-            .filter(
-              (m) =>
-                (subject === "전체" || m.subject === subject) &&
-                m.title.includes(search),
-            )
-            .map((m) => (
-              <Link
-                key={m.id}
-                to={`/app/materials/${m.id}`}
-                className="material-card"
-              >
-                <div className={`material-cover cover-${m.subject}`}>
-                  <div className="cover-caption">가나다계단 CLASSROOM</div>
-                  <div className="cover-art">
-                    <BookOpen size={48} />
-                    <span>✦</span>
-                  </div>
+          {showCivilExample && <CivilTrialCard />}
+          {visibleMaterials.map((m) => (
+            <Link
+              key={m.id}
+              to={`/app/materials/${m.id}`}
+              className="material-card"
+            >
+              <div className={`material-cover cover-${m.subject}`}>
+                <div className="cover-caption">가나다계단 CLASSROOM</div>
+                <div className="cover-art">
+                  <BookOpen size={48} />
+                  <span>✦</span>
+                </div>
+                <span>
+                  {m.subject} · {m.unit || "맞춤 학습"}
+                </span>
+              </div>
+              <div className="material-card-body">
+                <div className="section-title">
+                  <Badge tone={m.status === "published" ? "green" : "orange"}>
+                    {statusLabels[m.status]}
+                  </Badge>
+                  <small>{m.subject}</small>
+                </div>
+                <h2>{m.title}</h2>
+                <p>
+                  {teacher
+                    ? `${m.targets.length}명에게 준비한 수준별 자료`
+                    : `나에게 맞춘 ${Object.values(m.variants)[0].level}단계 읽기 자료`}
+                </p>
+                <div className="material-card-footer">
                   <span>
-                    {m.subject} · {m.unit || "맞춤 학습"}
+                    <Languages size={14} />
+                    쉬운 한국어와 교과어
                   </span>
+                  <ArrowRight size={18} />
                 </div>
-                <div className="material-card-body">
-                  <div className="section-title">
-                    <Badge tone={m.status === "published" ? "green" : "orange"}>
-                      {statusLabels[m.status]}
-                    </Badge>
-                    <small>{m.subject}</small>
-                  </div>
-                  <h2>{m.title}</h2>
-                  <p>
-                    {teacher
-                      ? `${m.targets.length}명에게 준비한 수준별 자료`
-                      : `나에게 맞춘 ${Object.values(m.variants)[0].level}단계 읽기 자료`}
-                  </p>
-                  <div className="material-card-footer">
-                    <span>
-                      <Languages size={14} />
-                      쉬운 한국어와 교과어
-                    </span>
-                    <ArrowRight size={18} />
-                  </div>
-                </div>
-              </Link>
-            ))}
+              </div>
+            </Link>
+          ))}
         </div>
       )}
-      {!loading &&
-        !data!.filter(
-          (m) =>
-            (subject === "전체" || m.subject === subject) &&
-            m.title.includes(search),
-        ).length && (
-          <Empty
-            title="아직 자료가 없어요"
-            description="검색 조건을 바꾸거나 새로운 맞춤 자료를 만들어 보세요."
-            action={
-              teacher && (
-                <Link to="/app/create" className="btn">
-                  자료 만들기
-                </Link>
-              )
-            }
-          />
-        )}
+      {!loading && !showCivilExample && !visibleMaterials.length && (
+        <Empty
+          title="아직 자료가 없어요"
+          description="검색 조건을 바꾸거나 새로운 맞춤 자료를 만들어 보세요."
+          action={
+            teacher && (
+              <Link to="/app/create" className="btn">
+                자료 만들기
+              </Link>
+            )
+          }
+        />
+      )}
     </>
   );
 }
@@ -269,7 +274,6 @@ export function CreateMaterial() {
   if (!students) return <Loading />;
   return (
     <>
-      <MaterialTools />
       <Link to="/app/materials" className="back-link">
         <ArrowLeft size={16} />
         수업 자료로 돌아가기
