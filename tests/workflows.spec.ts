@@ -104,37 +104,153 @@ test("teacher creates, individually reviews, publishes, then student reads and a
   expect(errors).toEqual([]);
 });
 
-test("student completes self-check, roadmap activity and teacher message", async ({
+test("six-level diagnosis resumes drafts, waits for teacher grading and creates a personal path", async ({
   page,
+  browser,
 }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
   await enter(page, "student");
-  await page
+  await page.goto("/app/roadmap");
+  await expect(
+    page.getByRole("heading", { name: "먼저 나의 출발점을 알아봐요" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "한국어 자가 점검 시작" }).click();
+  await page.getByRole("button", { name: "6수준 진단 시작하기" }).click();
+  let questions = page.locator(".diagnostic-question");
+  await expect(questions).toHaveCount(12);
+  await questions.first().getByRole("radio").nth(1).check();
+  await page.getByRole("button", { name: "임시저장", exact: true }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "임시저장했어요." }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.locator(".diagnostic-question").first().getByRole("radio").nth(1),
+  ).toBeChecked();
+  for (const [domain, answers] of [
+    ["듣기", [1, 0, 0, 0, 0, 0, 2, 1, 0, 0, 1, 1]],
+    ["읽기", [1, 0, 1, 2, 0, 1, 2, 0, 1, 0, 2, 1]],
+  ] as const) {
+    questions = page.locator(".diagnostic-question");
+    for (const [i, answer] of answers.entries())
+      await questions.nth(i).getByRole("radio").nth(answer).check();
+    await page.getByRole("button", { name: `${domain} 응답 제출` }).click();
+    await expect(page.locator(".diagnostic-progress .current")).toHaveText(
+      domain === "듣기" ? "읽기" : "쓰기",
+    );
+  }
+  const teacherContext = await browser.newContext({
+    baseURL: "http://127.0.0.1:5174",
+  });
+  const teacher = await teacherContext.newPage();
+  teacher.on("pageerror", (e) => errors.push(e.message));
+  await enter(teacher);
+  await teacher
     .getByRole("navigation")
-    .getByRole("link", { name: "한국어 자가 점검" })
+    .getByRole("link", { name: "학생 관리" })
     .click();
-  await page.getByRole("button", { name: "나의 자가 점검 저장하기" }).click();
+  await teacher
+    .getByRole("row")
+    .filter({ hasText: "누리" })
+    .getByRole("link", { name: "진단 보기·채점" })
+    .click();
+  await expect(
+    teacher.getByRole("heading", { level: 1, name: "누리의 6수준 진단" }),
+  ).toBeVisible();
+  for (const [qid, score] of [
+    ["쓰-1", "2"],
+    ["쓰-2", "0"],
+    ["쓰-3", "0"],
+    ["말-1", "0"],
+    ["말-2", "0"],
+  ]) {
+    await expect(page.locator(".diagnostic-item-meta")).toContainText(qid);
+    if (qid.startsWith("쓰"))
+      await page
+        .getByRole("textbox", { name: "나의 쓰기 응답" })
+        .fill("밥, 국, 김치. 이름은 누리입니다.");
+    else
+      await page
+        .getByRole("checkbox", { name: "녹음 대신 선생님 앞에서 말할게요" })
+        .check();
+    await page.getByRole("button", { name: "선생님께 과제 제출" }).click();
+    await expect(
+      page.getByRole("heading", { name: "선생님의 채점을 기다리고 있어요" }),
+    ).toBeVisible();
+    await teacher.getByRole("button", { name: "학생 응답 새로고침" }).click();
+    await expect(
+      teacher.getByRole("heading", { name: "제출된 과제 채점" }),
+    ).toBeVisible();
+    for (let i = 1; i <= 4; i++)
+      await teacher
+        .getByRole("combobox", { name: new RegExp(`^R${i} `) })
+        .selectOption(score);
+    if (qid.startsWith("말"))
+      await teacher
+        .getByRole("textbox", { name: /대면 말하기 관찰 기록/ })
+        .fill("직접 들은 말하기 응답을 기준표와 대조했어요.");
+    await teacher
+      .getByRole("button", { name: "채점 저장 및 다음 과제 안내" })
+      .click();
+    await expect(
+      teacher.getByRole("heading", { name: "제출된 과제 채점" }),
+    ).toHaveCount(0);
+    await page.getByRole("button", { name: "채점 결과 새로고침" }).click();
+  }
   await expect(
     page.getByRole("heading", { name: "나의 출발점을 기록했어요!" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "나의 배움길 보기" }).click();
+  await expect(page.locator(".diagnostic-results")).not.toContainText(
+    "교과 적응 한국어",
+  );
+  await teacher.screenshot({
+    path: "/tmp/ganada-six-teacher.png",
+    fullPage: true,
+  });
   await page
-    .getByRole("button", { name: "시작하기", exact: true })
-    .first()
+    .getByRole("link", { name: "나의 배움길 보기", exact: true })
     .click();
-  await page.getByRole("dialog").getByRole("radio").first().check();
-  await page.getByRole("button", { name: "답 확인하기" }).click();
   await expect(
-    page.getByText("잘했어요! 학습 기록을 저장했어요."),
+    page.getByRole("heading", { level: 1, name: "나의 배움길" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "배움길로 돌아가기" }).click();
+  await expect(page.locator(".personal-path-card")).toHaveCount(1);
   await page
-    .getByRole("navigation")
-    .getByRole("link", { name: "선생님과 이야기" })
-    .click();
-  const text = `선생님, 수업 자료를 잘 읽었어요. ${Date.now()}`;
+    .getByRole("textbox", { name: "걸음 1 배움 기록" })
+    .fill("선생님께 어려운 부분을 알려드렸어요.");
+  await page.getByRole("button", { name: "활동 기록 저장" }).click();
+  await expect(page.getByText("1 / 3개 활동 기록")).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("1 / 3개 활동 기록")).toBeVisible();
+  await page.screenshot({
+    path: "/tmp/ganada-six-student.png",
+    fullPage: true,
+  });
+  await teacher.reload();
+  await expect(
+    teacher.getByText("학생의 배움 기록: 선생님께 어려운 부분을 알려드렸어요."),
+  ).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.goto("/app/diagnostic");
+  await expect(page.locator(".diagnostic-results")).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({ path: "/tmp/ganada-six-mobile.png", fullPage: true });
+  await page.goto("/app/messages");
+  const text = `선생님, 새 진단을 완료했어요. ${Date.now()}`;
   await page.getByRole("textbox", { name: "메시지 내용" }).fill(text);
-  await page.getByRole("button", { name: "보내기" }).click();
+  await page.getByRole("button", { name: "보내기", exact: true }).click();
   await expect(page.getByText(text, { exact: true })).toBeVisible();
+  expect(errors).toEqual([]);
+  await teacherContext.close();
 });
 
 test("mobile dashboard has usable navigation and no horizontal overflow", async ({

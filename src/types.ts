@@ -1,3 +1,4 @@
+import type { DiagnosticResult } from "./diagnosis";
 import type { L1Result, ReadingSupport } from "./l1";
 export type Role = "teacher" | "student";
 export type Student = {
@@ -13,7 +14,9 @@ export type Student = {
   };
   everyday: number;
   academic: number;
-  diagnostic_source: "sample" | "self";
+  diagnostic_source: "unassessed" | "diagnostic_partial" | "diagnostic";
+  level_scale: "diagnostic_1_6";
+  diagnostic_summary: DiagnosticResult | null;
 };
 export type Session = {
   role: Role;
@@ -87,6 +90,7 @@ export type Report = {
   student: Student;
   attempt: Attempt | null;
   completed_steps: number;
+  total_steps: number;
   saved_words: number;
 };
 export type Quiz = {
@@ -116,15 +120,6 @@ export type Message = {
   content: string;
   created_at: string;
 };
-export type RoadStep = {
-  id: string;
-  title: string;
-  description: string;
-  minutes: number;
-  prompt: string;
-  options: string[];
-  completed: boolean;
-};
 export const languages: Record<string, string> = {
   vi: "베트남어",
   en: "영어",
@@ -132,12 +127,25 @@ export const languages: Record<string, string> = {
   mn: "몽골어",
   bn: "벵골어",
 };
-export const levelNames = [
-  "시작해요",
-  "익숙해져요",
-  "스스로 해요",
-  "넓혀 가요",
-];
+export const levelNames = ["시작", "초기", "발달", "확장", "연결", "도달"];
+export const levelLabel = (level: number) =>
+  level > 0 ? `${level}수준 · ${levelNames[level - 1]}` : "진단 전";
+export const diagnosticSourceLabel = (source: Student["diagnostic_source"]) =>
+  source === "diagnostic"
+    ? "6수준 진단 완료"
+    : source === "diagnostic_partial"
+      ? "6수준 진단 중"
+      : "진단 전";
+export const studentLevelLabel = (student: Student, domain?: string) => {
+  const r = student.diagnostic_summary;
+  if (!r) return "진단 전";
+  const level = domain ? r.domains[domain].level : r.overall;
+  return level === null
+    ? "진단 진행 중"
+    : level === 0
+      ? "재확인 필요"
+      : `${level}${domain && r.domains[domain].next_challenge ? "+" : ""}수준 · ${levelNames[level - 1]}`;
+};
 
 export const skillLabels = {
   listening: "듣기",

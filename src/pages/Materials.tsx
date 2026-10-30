@@ -52,7 +52,13 @@ import {
   useToast,
 } from "../components";
 import { useSession } from "../session";
-import { languages, type Material, type Student, type Variant } from "../types";
+import {
+  languages,
+  studentLevelLabel,
+  type Material,
+  type Student,
+  type Variant,
+} from "../types";
 
 const statusLabels = {
   draft: "검토 대기",
@@ -161,7 +167,7 @@ export function Materials() {
                 <p>
                   {teacher
                     ? `${m.targets.length}명에게 준비한 수준별 자료`
-                    : `나에게 맞춘 ${Object.values(m.variants)[0].level}단계 읽기 자료`}
+                    : "나에게 맞춘 읽기 자료"}
                 </p>
                 <div className="material-card-footer">
                   <span>
@@ -425,7 +431,8 @@ export function CreateMaterial() {
                       <div>
                         <strong>{s.name}</strong>
                         <small>
-                          {languages[s.language]} · 읽기 {s.levels.reading}단계
+                          {languages[s.language]} · 읽기{" "}
+                          {studentLevelLabel(s, "reading")}
                         </small>
                       </div>
                     </label>
@@ -533,8 +540,8 @@ export function CreateMaterial() {
                   .filter((s) => targets.includes(s.id))
                   .map((s) => (
                     <Badge key={s.id} tone="neutral">
-                      {s.name} · {languages[s.language]} · {s.levels.reading}
-                      단계
+                      {s.name} · {languages[s.language]} ·{" "}
+                      {studentLevelLabel(s, "reading")}
                     </Badge>
                   ))}
               </div>
@@ -833,8 +840,8 @@ function ReviewMaterial({
             title={`${students.find((s) => s.id === active)!.name}의 맞춤 자료`}
           >
             <Badge>
-              {variant.reconstruction ? "프로필 기반" : `${variant.level}단계`}{" "}
-              · {variant.native_language || languages[variant.language]}
+              {variant.reconstruction ? "프로필 기반" : "읽기 자료"} ·{" "}
+              {variant.native_language || languages[variant.language]}
             </Badge>
           </SectionTitle>
           {variant.reconstruction ? (
@@ -1136,10 +1143,8 @@ function ReaderContent({
         description="모르는 말이 있어도 괜찮아요. 천천히, 함께 읽어 봐요."
         action={
           <Badge>
-            {variant.native_language
-              ? "맞춤 읽기"
-              : `${variant.level}단계 읽기`}{" "}
-            · {variant.native_language || languages[variant.language]}
+            {variant.native_language ? "맞춤 읽기" : "읽기 자료"} ·{" "}
+            {variant.native_language || languages[variant.language]}
           </Badge>
         }
       />

@@ -12,7 +12,12 @@ import {
   PageHeading,
   useToast,
 } from "../components";
-import { languages, type Student } from "../types";
+import {
+  languages,
+  studentLevelLabel,
+  diagnosticSourceLabel,
+  type Student,
+} from "../types";
 import { L1ProfileModal } from "./TeacherL1";
 
 export function Students() {
@@ -112,23 +117,27 @@ export function Students() {
                       </div>
                     </td>
                     <td>{languages[s.language]}</td>
-                    {Object.values(s.levels).map((v, i) => (
-                      <td key={i}>
-                        <span
-                          className={`level-pill ${v <= 2 ? "level-low" : ""}`}
-                        >
-                          {v}단계
-                        </span>
-                      </td>
-                    ))}
+                    {["listening", "speaking", "reading", "writing"].map(
+                      (domain) => (
+                        <td key={domain}>
+                          <span className="level-pill">
+                            {studentLevelLabel(s, domain)}
+                          </span>
+                        </td>
+                      ),
+                    )}
                     <td>
                       <Badge tone="neutral">
-                        {s.diagnostic_source === "self"
-                          ? "자가 점검"
-                          : "합성 예시"}
+                        {diagnosticSourceLabel(s.diagnostic_source)}
                       </Badge>
                     </td>
                     <td>
+                      <Link
+                        className="btn secondary small"
+                        to={`/app/students/${s.id}/diagnostic`}
+                      >
+                        진단 보기·채점
+                      </Link>
                       <button
                         className="btn secondary small"
                         onClick={() => setProfileStudent(s)}
@@ -151,9 +160,9 @@ export function Students() {
         </div>
       </section>
       <Notice>
-        설계안의 해커톤 미션에 따라 1~4단계 척도를 사용합니다. 현재 값은 합성
-        예시 또는 학생의 자가 점검이며, 표준화된 한국어 진단평가 결과가
-        아닙니다.
+        새 6수준 진단을 기준으로 표시합니다. 시작 → 초기 → 발달 → 확장 → 연결 →
+        도달 순서이며, +는 다음 수준에 도전 중이라는 뜻입니다. 쓰기·말하기는
+        교사의 채점이 필요합니다.
       </Notice>
       {invite && (
         <Modal title="학급 초대 코드" onClose={() => setInvite(null)}>

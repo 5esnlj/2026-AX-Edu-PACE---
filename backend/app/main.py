@@ -15,9 +15,12 @@ from pydantic import BaseModel, Field, StrictInt, field_validator
 from pypdf import PdfReader
 from contextlib import asynccontextmanager
 
-from .agents import LANGUAGES, SUBJECTS, GLOSSARY, SAMPLE_TEXT, ROADMAP, LearningAgent, DemoLearningAgent, assess, public_questions
+from .agents import LANGUAGES, SUBJECTS, GLOSSARY, SAMPLE_TEXT, LearningAgent, DemoLearningAgent, assess, public_questions
 from .database import connect, dumps, initialize, now
 from .solar_agent import SolarAgentError, SolarLearningAgent
+from .diagnosis.api import register as register_diagnostic
+from .l3.api import register as register_learning_path
+from .l3.workflow import fingerprint
 from .l1.models import LearnerProfile, ReconstructionEdits
 from .l1.civil_trial import example as civil_trial_example
 from .l2.models import AnalyzeInput
@@ -66,13 +69,6 @@ class LearningInput(BaseModel):
     known: list[str] = Field(default_factory=list, max_length=100)
     unknown: list[str] = Field(default_factory=list, max_length=100)
 
-class Diagnostic(BaseModel):
-    listening: int = Field(ge=1, le=4)
-    speaking: int = Field(ge=1, le=4)
-    reading: int = Field(ge=1, le=4)
-    writing: int = Field(ge=1, le=4)
-    everyday: int = Field(ge=1, le=4)
-
 class MessageInput(BaseModel):
     student_id: str
     content: str = Field(min_length=1, max_length=2000)
@@ -81,13 +77,11 @@ class GlossaryInput(BaseModel):
     language: Literal["vi", "en", "uz", "mn", "bn"]
     entries: list[dict[str, str]] = Field(min_length=1, max_length=30)
 
-class Exercise(BaseModel):
-    answer: int = Field(ge=0, le=2)
-
 def student_dict(row):
     result = dict(row)
     result["levels"] = json.loads(result["levels"])
-    result["academic"] = round(sum(result["levels"].values()) / 4, 1)
+    result["diagnostic_summary"] = json.loads(result["diagnostic_summary"]) if result.get("diagnostic_summary") else None
+    result["academic"] = (result["diagnostic_summary"] or {}).get("overall") or 0
     return result
 
 def material_dict(row, student_id=None):
@@ -212,7 +206,17 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
 
     def l1_profile(db, student):
         row = db.execute("SELECT profile FROM l1_profiles WHERE student_id=?", (student["id"],)).fetchone()
-        return (LearnerProfile.model_validate_json(row["profile"]), "teacher") if row else (fallback_profile(student), "app")
+        if row:
+            return LearnerProfile.model_validate_json(row["profile"]), "teacher"
+        summary = student.get("diagnostic_summary")
+        profile = fallback_profile(student)
+        if summary:
+            profile.overall_korean_level = summary.get("overall") or None
+            profile.bottlenecks = [summary["bottleneck"]] if summary.get("bottleneck") else []
+            profile.diagnostic_notes = ["첨부 6수준 진단 기준의 결과입니다. 미완료·재확인 표시를 함께 참고합니다."]
+            from .l1.models import SubjectProfile
+            profile.subject_profiles = {name: SubjectProfile(representative_level=("≤3" if v["level"]==3 else v["level"]), recheck_required=v["recheck"], uncertainty_flags=v["flags"]) for name,v in summary["subjects"].items() if v["level"]}
+        return profile, "diagnostic" if summary else "app"
 
     @app.get("/api/students/{sid}/reconstruction-profile")
     def get_l1_profile(sid: str, _=Depends(teacher)):
@@ -243,13 +247,8 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
     def get_civil_trial_example(_=Depends(teacher)):
         return civil_trial_example()
 
-    @app.post("/api/diagnostic")
-    def diagnostic(data: Diagnostic, auth=Depends(learner)):
-        values = data.model_dump()
-        everyday = values.pop("everyday")
-        with connect(path) as db:
-            db.execute("UPDATE students SET levels=?,everyday=?,diagnostic_source='self' WHERE id=?", (dumps(values), everyday, auth["student_id"]))
-            return find_student(db, auth["student_id"])
+    register_diagnostic(app, path, learner, teacher, session, find_student)
+    register_learning_path(app, path, learner, teacher, find_student, agent)
 
     @app.get("/api/materials")
     def materials(auth=Depends(session)):
@@ -496,7 +495,11 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
             for row in db.execute("SELECT * FROM students ORDER BY id").fetchall():
                 student = student_dict(row)
                 attempt = db.execute("SELECT * FROM attempts WHERE student_id=? ORDER BY id DESC LIMIT 1", (student["id"],)).fetchone()
-                result.append({"student": student, "attempt": dict(json.loads(attempt["result"]), is_sample=bool(attempt["is_sample"]), created_at=attempt["created_at"]) if attempt else None, "completed_steps": db.execute("SELECT count(*) FROM progress WHERE student_id=?", (student["id"],)).fetchone()[0], "saved_words": sum(len(json.loads(r[0])) for r in db.execute("SELECT unknown FROM learning WHERE student_id=?", (student["id"],)))})
+                current_path = db.execute("SELECT progress,result FROM learning_paths WHERE student_id=? AND fingerprint=? ORDER BY created_at DESC LIMIT 1",
+                                          (student["id"], fingerprint(student["diagnostic_summary"]))).fetchone()
+                completed = len(json.loads(current_path["progress"])) if current_path else 0
+                total = len(json.loads(current_path["result"])["roadmap"]) if current_path else 0
+                result.append({"student": student, "attempt": dict(json.loads(attempt["result"]), is_sample=bool(attempt["is_sample"]), created_at=attempt["created_at"]) if attempt else None, "completed_steps": completed, "total_steps": total, "saved_words": sum(len(json.loads(r[0])) for r in db.execute("SELECT unknown FROM learning WHERE student_id=?", (student["id"],)))})
             return result
 
     @app.get("/api/learning/{mid}")
@@ -515,24 +518,6 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
                 raise HTTPException(422, "자료에 있는 단어를 한 가지 상태로 저장해 주세요.")
             db.execute("INSERT INTO learning VALUES(?,?,?,?,?,?) ON CONFLICT(student_id,material_id) DO UPDATE SET notes=excluded.notes,known=excluded.known,unknown=excluded.unknown,updated_at=excluded.updated_at", (auth["student_id"], mid, data.notes, dumps(data.known), dumps(data.unknown), now()))
         return {"ok": True}
-
-    @app.get("/api/roadmap")
-    def roadmap(auth=Depends(learner)):
-        with connect(path) as db:
-            student = find_student(db, auth["student_id"])
-            completed = {r[0] for r in db.execute("SELECT step_id FROM progress WHERE student_id=?", (auth["student_id"],))}
-        return {"reading_level": student["levels"]["reading"], "reason": "읽기 자가 점검이 1~2단계이면 교과어부터, 3~4단계이면 생활 속 적용부터 제안합니다. 데모 규칙이며 나머지 활동도 선택할 수 있어요.", "recommended": "words" if student["levels"]["reading"] <= 2 else "concepts", "steps": [dict({k: v for k, v in step.items() if k != "answer"}, completed=step["id"] in completed) for step in ROADMAP]}
-
-    @app.post("/api/roadmap/{step_id}/complete")
-    def complete(step_id: str, data: Exercise, auth=Depends(learner)):
-        step = next((s for s in ROADMAP if s["id"] == step_id), None)
-        if not step:
-            raise HTTPException(404, "학습 활동을 찾을 수 없습니다.")
-        correct = data.answer == step["answer"]
-        if correct:
-            with connect(path) as db:
-                db.execute("INSERT OR IGNORE INTO progress VALUES(?,?,?)", (auth["student_id"], step_id, now()))
-        return {"correct": correct, "message": "잘했어요! 학습 기록을 저장했어요." if correct else "다시 생각해 볼까요? 수업 자료에서 낱말의 뜻을 찾아보세요."}
 
     @app.get("/api/messages")
     def messages(student_id: str | None = None, auth=Depends(session)):

@@ -31,7 +31,7 @@ class DemoLearningAgent:
     def reconstruct(self, source: str, level: int, language: str, modes: list[str]) -> dict:
         terms = [dict(t, translation=t["translations"][language], verified=False) for t in GLOSSARY if t["term"] in source]
         text = source.strip()
-        if "easy" in modes:
+        if "easy" in modes and level > 0:
             replacements = {"국가의": "나라의", "정치 제도입니다": "정치 방식이에요", "결정하는": "정하는", "마땅히": "꼭", "뿐만 아니라": "말고도", "포함합니다": "들어가요", "존중하며": "소중하게 생각하며"}
             # Safe, reviewed sample for the included lesson; other sources use limited substitutions.
             if source.strip() == SAMPLE_TEXT.strip() and level <= 2:
@@ -39,7 +39,7 @@ class DemoLearningAgent:
             elif level <= 2:
                 for before, after in replacements.items():
                     text = text.replace(before, after)
-        return {"text": text, "terms": terms if "bilingual" in modes else [], "visuals": [{"term": t["term"], "meaning": t["meaning"]} for t in terms[:4]] if "visual" in modes else [], "level": level, "language": language, "provider": "demo", "notice": "규칙 기반 데모 결과입니다. 의미 보존·번역·수준 적합성을 교사가 확인해 주세요."}
+        return {"text": text, "terms": terms if "bilingual" in modes else [], "visuals": [{"term": t["term"], "meaning": t["meaning"]} for t in terms[:4]] if "visual" in modes else [], "level": level, "level_scale": "diagnostic_1_6", "language": language, "provider": "demo", "notice": "규칙 기반 데모 결과입니다. 의미 보존·번역·수준 적합성을 교사가 확인해 주세요."}
 
     def questions(self, source: str) -> list[dict]:
         if re.sub(r"\s+", "", source) != re.sub(r"\s+", "", SAMPLE_TEXT):
@@ -72,10 +72,3 @@ def assess(questions: list[dict], answers: dict[str, int]) -> dict:
         kind, label = "observe", "추가 관찰이 필요해요"
         recommendation = "응답이 혼재되어 있어요. 학생과 짧게 대화하고 다른 문항으로 확인해 주세요."
     return {"results": results, "score": sum(r["correct"] for r in results), "total": len(results), "standard": standard, "reduced": reduced, "kind": kind, "label": label, "recommendation": recommendation, "caution": "4개 문항의 학습 지원 참고 신호입니다. 표준화된 진단이나 인지 능력 판정이 아니며, 문항 난이도 차이도 결과에 영향을 줄 수 있습니다."}
-
-ROADMAP = [
-    {"id": "words", "title": "교과어와 친해지기", "description": "수업에서 만난 낱말을 쉬운 뜻과 연결해요.", "minutes": 5, "prompt": "‘선거’의 뜻은 무엇인가요?", "options": ["대표할 사람을 뽑는 일", "친구와 운동하는 일", "그림을 그리는 일"], "answer": 0},
-    {"id": "sentences", "title": "짧은 문장으로 이해하기", "description": "핵심 문장을 읽고 뜻을 확인해요.", "minutes": 7, "prompt": "‘다른 사람의 의견을 존중해요’와 같은 뜻을 골라요.", "options": ["다른 의견을 무시해요", "다른 생각도 소중하게 여겨요", "나만 이야기해요"], "answer": 1},
-    {"id": "concepts", "title": "우리 생활과 연결하기", "description": "배운 개념을 익숙한 상황에 적용해요.", "minutes": 8, "prompt": "시민 참여의 예를 골라요.", "options": ["동네 문제에 관심을 갖지 않아요", "혼자서만 결정해요", "동네 회의에서 의견을 말해요"], "answer": 2},
-    {"id": "explain", "title": "배운 내용을 다시 확인하기", "description": "민주주의의 핵심을 확인하며 마무리해요.", "minutes": 5, "prompt": "민주주의에서 나라의 주인은 누구인가요?", "options": ["국민", "왕", "군인"], "answer": 0},
-]

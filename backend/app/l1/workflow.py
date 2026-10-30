@@ -1,6 +1,6 @@
 """Adapted from the supplied teacher workflow; browser review replaces its CLI.
 
-Never convert the app's 1–4 self-check into the attachment's 1–6 diagnosis.
+Use only the six-level diagnosis; unknown levels remain missing.
 The server owns identities, source links, vocabulary state and approval flags.
 """
 import copy
@@ -24,8 +24,8 @@ EDITABLE_FIELDS = ["key_sentences.rewritten", "vocabulary.translation", "vocabul
 def fallback_profile(student: dict) -> LearnerProfile:
     return LearnerProfile(
         grade=student["grade"], native_language=LANGUAGES.get(student["language"]),
-        level_scale="app_1_4", skills=student["levels"],
-        # A self-check does not establish academic bottlenecks or a 6-level diagnosis.
+        level_scale="diagnostic_1_6", skills={k:v or None for k,v in student["levels"].items()},
+        # Unknown values are missing; no conversion from the removed four-level scale.
     )
 
 
@@ -45,8 +45,6 @@ def prepare_request(profile: LearnerProfile, source: str, subject: str, title: s
                     profile_source: str, vocabulary_state: dict | None = None) -> dict:
     safe_profile = profile.model_dump(exclude={"learner_id", "display_name"})
     notes = []
-    if profile.level_scale == "app_1_4":
-        notes.append("기존 앱의 1~4단계 참고 기록입니다. 첨부 진단의 1~6단계 또는 어휘 위계와 대응하지 않습니다.")
     if not profile.overall_korean_level:
         notes.append("종합 진단이 없어 전체 단계나 상위 어휘를 추정하지 않습니다.")
     if not any(profile.academic_korean.model_dump().values()):
@@ -269,7 +267,7 @@ def render_variant(output: dict, source: str, student: dict, provider: str) -> d
         reading_support.append({"id": context["id"], "source": context["source"], "rewritten": sentence["rewritten"] if sentence else context["source"],
             "swaps": sentence.get("swaps", []) if sentence else [], "explanation": sentence.get("explanation", "") if sentence else "",
             "page": context.get("page"), "activity": context.get("activity", False)})
-    return {"text": text, "terms": terms, "visuals": visuals, "level": student["levels"]["reading"],
+    return {"text": text, "terms": terms, "visuals": visuals, "level": student["levels"]["reading"], "level_scale": "diagnostic_1_6",
         "reading_support": reading_support, "source_pdf_url": output["document"].get("source_pdf_url"),
         "language": student["language"], "native_language": language or "모국어 미등록", "provider": provider,
         "notice": "Solar가 생성한 교사용 L1 재구성 초안입니다. 문장 근거·어휘 분류·번역·시각 자료를 확인해 주세요." if provider == "solar"
