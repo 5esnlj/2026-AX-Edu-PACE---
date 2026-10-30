@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "source": "학생 페르소나.pdf의 진단 결과를 구조화한 데모 프로필",
+  "learners": [
+    {
+      "learner_id": "student_a",
+      "display_name": "학생 A",
+      "grade": "중학교 1학년",
+      "native_language": "중국어",
+      "overall_korean_level": 5,
+      "skills": {
+        "listening": "5+",
+        "reading": 5,
+        "writing": 5,
+        "speaking": "4+"
+      },
+      "academic_korean": {
+        "B": 6,
+        "T1": 6,
+        "T2": 6,
+        "T3": 6,
+        "C": 4
+      },
+      "bottlenecks": ["C"],
+      "daily_korean_support": false,
+      "subject_profiles": {
+        "국어": {
+          "representative_level": 6,
+          "comprehension_stronger_than_expression": true,
+          "uncertainty_flags": []
+        },
+        "수학": {
+          "representative_level": 5,
+          "comprehension_stronger_than_expression": true,
+          "uncertainty_flags": []
+        },
+        "과학": {
+          "representative_level": 5,
+          "uncertainty_flags": []
+        },
+        "사회": {
+          "representative_level": "≤3",
+          "recheck_required": true,
+          "uncertainty_flags": ["추측 의심", "교과 편차"]
+        }
+      },
+      "diagnostic_notes": [
+        "B·T1·T2·T3는 안정 숙달, C는 M4 형성 중",
+        "교과 언어 병목은 교과 개념어와 설명 구조(원인-결과, 주장-근거)",
+        "말하기 산출 지원을 함께 계획",
+        "사회 교과 프로필은 재시행 및 관찰 필요"
+      ]
+    }
+  ]
+}

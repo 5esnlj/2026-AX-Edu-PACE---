@@ -13,10 +13,12 @@ import {
   useToast,
 } from "../components";
 import { languages, type Student } from "../types";
+import { L1ProfileModal } from "./TeacherL1";
 
 export function Students() {
   const { data, error, reload } = useResource<Student[]>("/students");
   const [search, setSearch] = useState("");
+  const [profileStudent, setProfileStudent] = useState<Student | null>(null);
   const [invite, setInvite] = useState<{
     code: string;
     expires_at: string;
@@ -127,6 +129,13 @@ export function Students() {
                       </Badge>
                     </td>
                     <td>
+                      <button
+                        className="btn secondary small"
+                        onClick={() => setProfileStudent(s)}
+                        aria-label={`${s.name} L1 프로필`}
+                      >
+                        L1 프로필
+                      </button>
                       <Link
                         className="text-link"
                         to={`/app/reports?student=${s.id}`}
@@ -174,6 +183,12 @@ export function Students() {
             코드 복사
           </button>
         </Modal>
+      )}
+      {profileStudent && (
+        <L1ProfileModal
+          student={profileStudent}
+          onClose={() => setProfileStudent(null)}
+        />
       )}
     </>
   );

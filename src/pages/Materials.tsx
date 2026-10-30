@@ -24,6 +24,8 @@ import {
 import { useEffect, useState, type DragEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, useResource, useAgentHealth } from "../api";
+import { TeacherL1Review } from "./TeacherL1";
+import { toL1Edits, type L1Edits } from "../l1";
 import {
   Avatar,
   Badge,
@@ -178,6 +180,7 @@ export function CreateMaterial() {
   const [source, setSource] = useState("");
   const [targets, setTargets] = useState<string[]>(["std-1", "std-2"]);
   const [modes, setModes] = useState(["easy", "bilingual", "visual"]);
+  const [useL1, setUseL1] = useState(true);
   const [filename, setFilename] = useState("");
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -226,6 +229,7 @@ export function CreateMaterial() {
           source_text: source,
           targets,
           modes,
+          workflow: useL1 ? "teacher_l1" : "standard",
         }),
       });
       navigate(`/app/materials/${item.id}`);
@@ -394,60 +398,95 @@ export function CreateMaterial() {
           ) : (
             <section className="panel form-panel">
               <SectionTitle
-                title="어떤 도움을 더할까요?"
-                detail="선택한 지원을 학생의 읽기 수준과 주 사용 언어에 맞춰 조합해요."
+                title={
+                  useL1
+                    ? "L1 에이전트가 지원을 계획해요"
+                    : "어떤 도움을 더할까요?"
+                }
+                detail={
+                  useL1
+                    ? "등록한 학생 프로필·교과·원문을 바탕으로 필요한 지원을 자동으로 고릅니다."
+                    : "선택한 지원을 학생의 읽기 수준과 주 사용 언어에 맞춰 조합해요."
+                }
               />
-              <div className="mode-options">
-                {[
-                  {
-                    id: "easy",
-                    icon: BookOpen,
-                    title: "쉬운 한국어",
-                    desc: "긴 문장을 풀고, 익숙한 낱말로 바꿔요.",
-                  },
-                  {
-                    id: "bilingual",
-                    icon: Languages,
-                    title: "핵심 교과어 병기",
-                    desc: "교과어 옆에 학생의 주 사용 언어를 함께 보여요.",
-                  },
-                  {
-                    id: "visual",
-                    icon: Image,
-                    title: "시각 개념 카드",
-                    desc: "교과어와 쉬운 뜻을 카드로 연결해요. 이미지 생성은 미연결이에요.",
-                  },
-                ].map((m) => (
-                  <label
-                    key={m.id}
-                    className={`mode-option ${modes.includes(m.id) ? "selected" : ""}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={modes.includes(m.id)}
-                      onChange={(e) =>
-                        setModes(
-                          e.target.checked
-                            ? [...modes, m.id]
-                            : modes.filter((id) => id !== m.id),
-                        )
-                      }
-                    />
-                    <m.icon size={27} />
-                    <div>
-                      <h3>{m.title}</h3>
-                      <p>{m.desc}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
+              <label className="checkbox-line">
+                <input
+                  type="checkbox"
+                  checked={useL1}
+                  onChange={(e) => setUseL1(e.target.checked)}
+                />
+                교사용 L1 재구성 에이전트 사용
+              </label>
+              {useL1 ? (
+                <div className="l1-card">
+                  <p>
+                    쉬운 한국어·모국어 병기·시각 자료의 필요성을 학생별로
+                    판단합니다. 핵심 교과 개념어는 유지하고, 문장별 재구성
+                    이유를 제공합니다.
+                  </p>
+                  <p>
+                    상세 프로필이 없으면 기존 앱 기록을 참고하며, 확인되지 않은
+                    진단 단계·어휘 위계는 추정하지 않습니다.
+                  </p>
+                  <Link className="text-link" to="/app/students">
+                    학생 관리에서 L1 진단 프로필 등록하기
+                  </Link>
+                </div>
+              ) : (
+                <div className="mode-options">
+                  {[
+                    {
+                      id: "easy",
+                      icon: BookOpen,
+                      title: "쉬운 한국어",
+                      desc: "긴 문장을 풀고, 익숙한 낱말로 바꿔요.",
+                    },
+                    {
+                      id: "bilingual",
+                      icon: Languages,
+                      title: "핵심 교과어 병기",
+                      desc: "교과어 옆에 학생의 주 사용 언어를 함께 보여요.",
+                    },
+                    {
+                      id: "visual",
+                      icon: Image,
+                      title: "시각 개념 카드",
+                      desc: "교과어와 쉬운 뜻을 카드로 연결해요. 이미지 생성은 미연결이에요.",
+                    },
+                  ].map((m) => (
+                    <label
+                      key={m.id}
+                      className={`mode-option ${modes.includes(m.id) ? "selected" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={modes.includes(m.id)}
+                        onChange={(e) =>
+                          setModes(
+                            e.target.checked
+                              ? [...modes, m.id]
+                              : modes.filter((id) => id !== m.id),
+                          )
+                        }
+                      />
+                      <m.icon size={27} />
+                      <div>
+                        <h3>{m.title}</h3>
+                        <p>{m.desc}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
               <Notice>
                 {agent?.provider === "solar"
                   ? agent.configured
-                    ? "Solar로 원문을 학생 수준에 맞춰 재구성하고 교과어 번역을 만듭니다. 원문·읽기 단계·대상 언어가 Upstage로 전송됩니다. 생성에는 시간이 걸릴 수 있으며 API 사용료가 발생할 수 있습니다."
+                    ? "Solar로 원문을 학생에게 맞춰 재구성합니다. 원문·선택 교과·학습 지원 프로필이 Upstage로 전송됩니다. 생성에는 시간이 걸릴 수 있으며 API 사용료가 발생할 수 있습니다."
                     : "Solar API 키가 아직 설정되지 않았습니다. 서버 설정 후 다시 실행해 주세요."
                   : agent
-                    ? "규칙 기반 데모입니다. 정치 단원 예제에는 준비된 쉬운 글을 사용하며, 다른 자료는 제한적인 낱말 치환만 수행합니다."
+                    ? useL1
+                      ? "L1 검토 흐름을 위한 데모입니다. 원문과 내장 예시 교과어를 사용하며, 실제 재구성에는 Solar 설정이 필요합니다."
+                      : "규칙 기반 데모입니다. 정치 단원 예제에는 준비된 쉬운 글을 사용하며, 다른 자료는 제한적인 낱말 치환만 수행합니다."
                     : "AI 설정을 확인하고 있습니다."}
               </Notice>
               <div className="selection-summary">
@@ -490,7 +529,7 @@ export function CreateMaterial() {
             ) : (
               <button
                 className="btn"
-                disabled={busy || !modes.length}
+                disabled={busy || (!useL1 && !modes.length)}
                 onClick={generate}
               >
                 {busy ? (
@@ -578,6 +617,13 @@ function ReviewMaterial({
   );
   const [busy, setBusy] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [l1Edits, setL1Edits] = useState<Record<string, L1Edits>>(
+    Object.fromEntries(
+      Object.entries(item.variants)
+        .filter(([, v]) => v.reconstruction)
+        .map(([id, v]) => [id, toL1Edits(v.reconstruction!)]),
+    ),
+  );
   const [translations, setTranslations] = useState<
     Record<string, Record<string, string>>
   >(
@@ -590,29 +636,49 @@ function ReviewMaterial({
   );
   const isReviewed = (id: string) =>
     item.reviewed.includes(id) &&
-    edits[id] === item.variants[id].text &&
-    item.variants[id].terms.every(
-      (t) => translations[id][t.term] === t.translation,
-    );
+    (item.variants[id].reconstruction
+      ? JSON.stringify(l1Edits[id]) ===
+        JSON.stringify(toL1Edits(item.variants[id].reconstruction!))
+      : edits[id] === item.variants[id].text &&
+        item.variants[id].terms.every(
+          (t) => translations[id][t.term] === t.translation,
+        ));
   const toast = useToast();
   const variant = item.variants[active];
   const published = item.status === "published";
   const allReviewed = item.targets.every(isReviewed);
-  async function review() {
+  async function review(approve: boolean) {
     setBusy(true);
     try {
       const result = await api<Material>(`/materials/${item.id}/review`, {
         method: "PATCH",
-        body: JSON.stringify({
-          student_id: active,
-          text: edits[active],
-          confirmed: true,
-          translations: translations[active],
-        }),
+        body: JSON.stringify(
+          variant.reconstruction
+            ? {
+                student_id: active,
+                confirmed: approve,
+                reconstruction_edits: l1Edits[active],
+              }
+            : {
+                student_id: active,
+                text: edits[active],
+                confirmed: approve,
+                translations: translations[active],
+              },
+        ),
       });
       setItem(result);
+      if (result.variants[active].reconstruction)
+        setL1Edits((current) => ({
+          ...current,
+          [active]: toL1Edits(result.variants[active].reconstruction!),
+        }));
       setConfirmed(false);
-      toast("이 학생의 자료 검토를 저장했어요.");
+      toast(
+        approve
+          ? "이 학생의 자료 검토를 저장했어요."
+          : "수정 내용을 저장했어요. 검토 완료 후 배포할 수 있습니다.",
+      );
     } catch (e) {
       toast((e as Error).message, true);
     } finally {
@@ -672,13 +738,16 @@ function ReviewMaterial({
               <button
                 key={id}
                 className={active === id ? "active" : ""}
+                disabled={busy}
                 onClick={() => {
                   setActive(id);
                   setConfirmed(false);
                 }}
               >
                 {s.name}
-                <small>{languages[s.language]}</small>
+                <small>
+                  {item.variants[id].native_language || languages[s.language]}
+                </small>
                 {isReviewed(id) && <CheckCircle2 size={15} />}
               </button>
             );
@@ -690,8 +759,8 @@ function ReviewMaterial({
         </button>
       </div>
       <Notice>
-        {variant.notice} 저자원 언어를 포함한 예시 대역은 전문 검수되지
-        않았습니다. 모든 학생의 번역과 글을 확인해야 배포할 수 있습니다.
+        {variant.notice} 저자원 언어를 포함한 번역은 전문 검수되지 않았습니다.
+        모든 학생의 번역과 글을 확인해야 배포할 수 있습니다.
       </Notice>
       <div className="review-grid">
         <section className="panel">
@@ -709,60 +778,91 @@ function ReviewMaterial({
             title={`${students.find((s) => s.id === active)!.name}의 맞춤 자료`}
           >
             <Badge>
-              {variant.level}단계 · {languages[variant.language]}
+              {variant.reconstruction ? "프로필 기반" : `${variant.level}단계`}{" "}
+              · {variant.native_language || languages[variant.language]}
             </Badge>
           </SectionTitle>
-          <label className="field">
-            <span className="sr-only">학생별 쉬운 글 수정</span>
-            <textarea
-              className="review-text"
-              readOnly={published}
-              value={edits[active]}
-              onChange={(e) => {
-                setEdits({ ...edits, [active]: e.target.value });
-                setConfirmed(false);
-              }}
-              maxLength={40000}
-            />
-          </label>
-          <div className="print-text">{edits[active]}</div>
-          <ConceptCards variant={variant} />
-          <div className="term-review">
-            <h3>
-              <Languages size={17} />
-              교과어 병기 · 검토 필요
-            </h3>
-            {variant.terms.map((t) => (
-              <div key={t.term}>
-                <strong>{t.term}</strong>
-                {published ? (
-                  <span>{t.translation}</span>
-                ) : (
-                  <label className="translation-field">
-                    <span className="sr-only">{t.term} 번역 수정</span>
-                    <input
-                      value={translations[active][t.term]}
-                      maxLength={300}
-                      onChange={(e) => {
-                        setTranslations({
-                          ...translations,
-                          [active]: {
-                            ...translations[active],
-                            [t.term]: e.target.value,
-                          },
-                        });
-                        setConfirmed(false);
-                      }}
-                    />
-                  </label>
+          {variant.reconstruction ? (
+            <>
+              <TeacherL1Review
+                data={variant.reconstruction}
+                edits={l1Edits[active]}
+                readOnly={published || busy}
+                onChange={(next) => {
+                  setL1Edits({ ...l1Edits, [active]: next });
+                  setConfirmed(false);
+                }}
+              />
+              <details className="l1-card">
+                <summary>저장된 학생용 자료 미리보기</summary>
+                {!published && (
+                  <p className="muted">
+                    수정 후 ‘검토 내용 저장’을 누르면 미리보기에 반영됩니다.
+                  </p>
                 )}
-                <Badge tone="orange">예시 대역</Badge>
+                <div className="original-text">
+                  {variant.text.split("\n").map((text, i) => (
+                    <p key={i}>{text}</p>
+                  ))}
+                </div>
+                <ConceptCards variant={variant} />
+              </details>
+            </>
+          ) : (
+            <>
+              <label className="field">
+                <span className="sr-only">학생별 쉬운 글 수정</span>
+                <textarea
+                  className="review-text"
+                  readOnly={published}
+                  value={edits[active]}
+                  onChange={(e) => {
+                    setEdits({ ...edits, [active]: e.target.value });
+                    setConfirmed(false);
+                  }}
+                  maxLength={40000}
+                />
+              </label>
+              <div className="print-text">{edits[active]}</div>
+              <ConceptCards variant={variant} />
+              <div className="term-review">
+                <h3>
+                  <Languages size={17} />
+                  교과어 병기 · 검토 필요
+                </h3>
+                {variant.terms.map((t) => (
+                  <div key={t.term}>
+                    <strong>{t.term}</strong>
+                    {published ? (
+                      <span>{t.translation}</span>
+                    ) : (
+                      <label className="translation-field">
+                        <span className="sr-only">{t.term} 번역 수정</span>
+                        <input
+                          value={translations[active][t.term]}
+                          maxLength={300}
+                          onChange={(e) => {
+                            setTranslations({
+                              ...translations,
+                              [active]: {
+                                ...translations[active],
+                                [t.term]: e.target.value,
+                              },
+                            });
+                            setConfirmed(false);
+                          }}
+                        />
+                      </label>
+                    )}
+                    <Badge tone="orange">예시 대역</Badge>
+                  </div>
+                ))}
+                {!variant.terms.length && (
+                  <p>선택한 방식·대역표에서 병기할 교과어가 없습니다.</p>
+                )}
               </div>
-            ))}
-            {!variant.terms.length && (
-              <p>선택한 방식·대역표에서 병기할 교과어가 없습니다.</p>
-            )}
-          </div>
+            </>
+          )}
           {!published && (
             <div className="review-confirm">
               <label className="checkbox-line">
@@ -778,13 +878,25 @@ function ReviewMaterial({
                 disabled={
                   busy ||
                   !confirmed ||
-                  edits[active].trim().length < 10 ||
-                  Object.values(translations[active]).some((v) => !v.trim())
+                  (!variant.reconstruction &&
+                    (edits[active].trim().length < 10 ||
+                      Object.values(translations[active]).some(
+                        (v) => !v.trim(),
+                      )))
                 }
-                onClick={review}
+                onClick={() => review(true)}
               >
                 <ShieldCheck size={17} />이 학생의 검토 완료
               </button>
+              {variant.reconstruction && (
+                <button
+                  className="btn secondary full"
+                  disabled={busy}
+                  onClick={() => review(false)}
+                >
+                  검토 내용 저장 (승인 보류)
+                </button>
+              )}
             </div>
           )}
         </section>
@@ -827,6 +939,20 @@ function ConceptCards({ variant }: { variant: Variant }) {
             <span>{["◉", "✳", "✦", "⌁"][i % 4]}</span>
             <strong>{v.term}</strong>
             <p>{v.meaning}</p>
+            {!!v.items?.length &&
+              (v.kind === "sequence" ? (
+                <ol aria-label={v.alt_text}>
+                  {v.items.map((text, index) => (
+                    <li key={index}>{text}</li>
+                  ))}
+                </ol>
+              ) : (
+                <ul aria-label={v.alt_text}>
+                  {v.items.map((text, index) => (
+                    <li key={index}>{text}</li>
+                  ))}
+                </ul>
+              ))}
           </div>
         ))}
       </div>
@@ -939,7 +1065,10 @@ function ReaderContent({
         description="모르는 말이 있어도 괜찮아요. 천천히, 함께 읽어 봐요."
         action={
           <Badge>
-            {variant.level}단계 읽기 · {languages[variant.language]}
+            {variant.native_language
+              ? "맞춤 읽기"
+              : `${variant.level}단계 읽기`}{" "}
+            · {variant.native_language || languages[variant.language]}
           </Badge>
         }
       />

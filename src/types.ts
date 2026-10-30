@@ -1,3 +1,4 @@
+import type { L1Result } from "./l1";
 export type Role = "teacher" | "student";
 export type Student = {
   id: string;
@@ -31,11 +32,19 @@ export type Term = {
 export type Variant = {
   text: string;
   terms: Term[];
-  visuals: { term: string; meaning: string }[];
+  visuals: {
+    term: string;
+    meaning: string;
+    kind?: string;
+    items?: string[];
+    alt_text?: string;
+  }[];
   level: number;
   language: string;
   provider: string;
   notice: string;
+  native_language?: string;
+  reconstruction?: L1Result;
 };
 export type Material = {
   id: string;

@@ -18,6 +18,11 @@ from contextlib import asynccontextmanager
 from .agents import LANGUAGES, SUBJECTS, GLOSSARY, SAMPLE_TEXT, ROADMAP, LearningAgent, DemoLearningAgent, assess, public_questions
 from .database import connect, dumps, initialize, now
 from .solar_agent import SolarAgentError, SolarLearningAgent
+from .l1.models import LearnerProfile, ReconstructionEdits
+from .l1.workflow import (
+    ROOT as L1_ROOT, fallback_profile, prepare_request, normalize_output, render_variant,
+    demo_output, apply_teacher_edits,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(ROOT / ".env")
@@ -34,6 +39,7 @@ class MaterialInput(BaseModel):
     source_text: str = Field(min_length=20, max_length=40000)
     targets: list[str] = Field(min_length=1, max_length=50)
     modes: list[Literal["easy", "bilingual", "visual"]] = Field(min_length=1, max_length=3)
+    workflow: Literal["standard", "teacher_l1"] = "standard"
 
     @field_validator("title", "source_text")
     @classmethod
@@ -44,9 +50,10 @@ class MaterialInput(BaseModel):
 
 class ReviewInput(BaseModel):
     student_id: str
-    text: str = Field(min_length=10, max_length=40000)
+    text: str | None = Field(default=None, min_length=10, max_length=40000)
     confirmed: bool
     translations: dict[str, str] = Field(default_factory=dict, max_length=100)
+    reconstruction_edits: ReconstructionEdits | None = None
 
 class Answers(BaseModel):
     answers: dict[str, StrictInt]
@@ -88,6 +95,8 @@ def material_dict(row, student_id=None):
         result["variants"] = {student_id: result["variants"][student_id]}
         result["targets"] = [student_id]
         result["reviewed"] = [student_id] if student_id in result["reviewed"] else []
+        # Teacher diagnosis, uncertainty and review rationale are not student-facing content.
+        result["variants"][student_id].pop("reconstruction", None)
     return result
 
 def create_app(db_path: str | None = None, learning_agent: LearningAgent | None = None):
@@ -198,6 +207,35 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
         with connect(path) as db:
             return [student_dict(row) for row in db.execute("SELECT * FROM students ORDER BY id")]
 
+    def l1_profile(db, student):
+        row = db.execute("SELECT profile FROM l1_profiles WHERE student_id=?", (student["id"],)).fetchone()
+        return (LearnerProfile.model_validate_json(row["profile"]), "teacher") if row else (fallback_profile(student), "app")
+
+    @app.get("/api/students/{sid}/reconstruction-profile")
+    def get_l1_profile(sid: str, _=Depends(teacher)):
+        with connect(path) as db:
+            profile, source = l1_profile(db, find_student(db, sid))
+        return {"profile": profile.model_dump(), "source": source}
+
+    @app.put("/api/students/{sid}/reconstruction-profile")
+    def save_l1_profile(sid: str, profile: LearnerProfile, _=Depends(teacher)):
+        with connect(path) as db:
+            find_student(db, sid)
+            db.execute("INSERT INTO l1_profiles VALUES(?,?,?) ON CONFLICT(student_id) DO UPDATE SET profile=excluded.profile,updated_at=excluded.updated_at",
+                       (sid, profile.model_dump_json(), now()))
+        return {"profile": profile.model_dump(), "source": "teacher"}
+
+    @app.delete("/api/students/{sid}/reconstruction-profile")
+    def remove_l1_profile(sid: str, _=Depends(teacher)):
+        with connect(path) as db:
+            find_student(db, sid)
+            db.execute("DELETE FROM l1_profiles WHERE student_id=?", (sid,))
+        return {"ok": True}
+
+    @app.get("/api/l1/example-profile")
+    def example_l1_profile(_=Depends(teacher)):
+        return json.loads((L1_ROOT / "data/learners.example.json").read_text(encoding="utf-8"))
+
     @app.post("/api/diagnostic")
     def diagnostic(data: Diagnostic, auth=Depends(learner)):
         values = data.model_dump()
@@ -245,18 +283,38 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
         targets = list(dict.fromkeys(data.targets))
         with connect(path) as db:
             profiles = [find_student(db, sid) for sid in targets]
+            requests = {}
+            if data.workflow == "teacher_l1":
+                for student in profiles:
+                    profile, profile_source = l1_profile(db, student)
+                    vocabulary_state = {}
+                    for row in db.execute("SELECT known,unknown FROM learning WHERE student_id=? ORDER BY updated_at", (student["id"],)):
+                        for state in ("known", "unknown"):
+                            vocabulary_state.update({term: state for term in json.loads(row[state]) if term in data.source_text})
+                    requests[student["id"]] = prepare_request(profile, data.source_text, data.subject, data.title, profile_source, vocabulary_state)
         # Network calls are made outside the DB transaction.
         try:
-            variants = {
-                s["id"]: agent.reconstruct(data.source_text, s["levels"]["reading"], s["language"], data.modes)
-                for s in profiles
-            }
+            variants = {}
+            for student in profiles:
+                if data.workflow == "teacher_l1":
+                    request = requests[student["id"]]
+                    if getattr(agent, "provider", "") == "demo":
+                        raw = demo_output(request)
+                    elif callable(getattr(agent, "reconstruct_l1", None)):
+                        raw = agent.reconstruct_l1(request)
+                    else:
+                        raise HTTPException(503, "현재 모델 어댑터가 교사용 L1 재구성을 지원하지 않습니다.")
+                    output = normalize_output(raw, request)
+                    variants[student["id"]] = render_variant(output, data.source_text, student, agent.provider)
+                else:
+                    variants[student["id"]] = agent.reconstruct(data.source_text, student["levels"]["reading"], student["language"], data.modes)
         except SolarAgentError as exc:
             raise HTTPException(exc.status_code, str(exc)) from None
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from exc
         with connect(path) as db:
-            db.execute("INSERT INTO materials VALUES(?,?,?,?,?,?,?,?,?,?,?)", (mid, data.title, data.subject, data.unit, data.source_text, dumps(data.modes), dumps(targets), dumps(variants), "[]", "draft", now()))
+            modes = sorted({m for v in variants.values() for m in v["reconstruction"]["learner_decision"]["methods_selected"]}) if data.workflow == "teacher_l1" else data.modes
+            db.execute("INSERT INTO materials VALUES(?,?,?,?,?,?,?,?,?,?,?)", (mid, data.title, data.subject, data.unit, data.source_text, dumps(modes), dumps(targets), dumps(variants), "[]", "draft", now()))
             return find_material(db, mid, auth)
 
     @app.patch("/api/materials/{mid}/review")
@@ -267,7 +325,18 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
                 raise HTTPException(409, "배포된 자료는 변경할 수 없습니다. 새 자료를 만들어 주세요.")
             if data.student_id not in item["targets"]:
                 raise HTTPException(422, "자료의 대상 학생이 아닙니다.")
-            item["variants"][data.student_id]["text"] = data.text
+            variant = item["variants"][data.student_id]
+            if "reconstruction" in variant:
+                if data.reconstruction_edits is None or data.text is not None or data.translations:
+                    raise HTTPException(422, "L1 자료는 문장·어휘·시각 자료 검토 항목으로 수정해 주세요.")
+                try:
+                    item["variants"][data.student_id] = apply_teacher_edits(variant, item["source_text"], data.reconstruction_edits, data.confirmed)
+                except ValueError:
+                    raise HTTPException(422, "L1 수정 내용을 확인해 주세요. 원문 연결과 핵심 개념어를 유지하고, 시각 자료의 제목·내용·설명을 입력해 주세요.") from None
+            else:
+                if data.text is None or data.reconstruction_edits is not None:
+                    raise HTTPException(422, "자료의 글과 번역 수정 내용을 입력해 주세요.")
+                item["variants"][data.student_id]["text"] = data.text
             terms = item["variants"][data.student_id]["terms"]
             if not set(data.translations) <= {t["term"] for t in terms} or any(not v.strip() or len(v) > 300 for v in data.translations.values()):
                 raise HTTPException(422, "자료에 있는 교과어의 번역을 1~300자로 입력해 주세요.")

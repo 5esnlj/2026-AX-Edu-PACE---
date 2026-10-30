@@ -1,0 +1,65 @@
+.l1-review {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.l1-review h3 {
+  margin: 0.4rem 0;
+}
+.l1-review p,
+.l1-review li {
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.l1-review ul,
+.l1-review ol {
+  padding-left: 1.25rem;
+}
+.l1-card {
+  padding: 1rem;
+  margin: 0.8rem 0;
+  border: 1px solid #dce6e1;
+  border-radius: 12px;
+  background: #f8fbf9;
+  min-width: 0;
+}
+.l1-card textarea {
+  min-height: 85px;
+  resize: vertical;
+}
+.l1-source {
+  white-space: pre-wrap;
+  padding: 0.7rem;
+  background: #fff;
+  border-radius: 8px;
+}
+.l1-row,
+.l1-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.l1-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+.l1-profile-json {
+  max-height: 320px;
+  overflow: auto;
+  padding: 1rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #f5f8f6;
+}
+.concept-card ol,
+.concept-card ul {
+  text-align: left;
+  padding-left: 1.2rem;
+}
+@media (max-width: 640px) {
+  .l1-fields {
+    grid-template-columns: 1fr;
+  }
+}
