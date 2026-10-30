@@ -54,6 +54,12 @@ class MaterialInput(BaseModel):
             raise ValueError("내용을 입력해 주세요.")
         return value.strip()
 
+class SelfMaterialInput(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+    subject: Literal["사회", "과학", "수학", "국어"]
+    unit: str = Field(default="", max_length=100)
+    source_text: str = Field(min_length=20, max_length=40000)
+
 class ReviewInput(BaseModel):
     student_id: str
     text: str | None = Field(default=None, min_length=10, max_length=40000)
@@ -262,7 +268,7 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
             return find_material(db, mid, auth)
 
     @app.post("/api/extract")
-    async def extract(file: UploadFile = File(...), include_page_markers: bool = False, _=Depends(teacher)):
+    async def extract(file: UploadFile = File(...), include_page_markers: bool = False, _=Depends(session)):
         raw = await file.read(MAX_UPLOAD + 1)
         if len(raw) > MAX_UPLOAD:
             raise HTTPException(413, "10MB 이하의 PDF를 올려 주세요.")
@@ -328,10 +334,7 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
             raise HTTPException(404, "오역 검토 기록을 찾을 수 없습니다.")
         return {**dict(row), "parameters": json.loads(row["parameters"]), "result": json.loads(row["result"])}
 
-    @app.post("/api/materials", status_code=201)
-    def create_material(data: MaterialInput, auth=Depends(teacher)):
-        mid = "lesson-" + secrets.token_hex(6)
-        targets = list(dict.fromkeys(data.targets))
+    def make_variants(data, targets):
         with connect(path) as db:
             profiles = [find_student(db, sid) for sid in targets]
             requests = {}
@@ -363,9 +366,27 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
             raise HTTPException(exc.status_code, str(exc)) from None
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from exc
+        modes = sorted({m for v in variants.values() for m in v["reconstruction"]["learner_decision"]["methods_selected"]}) if data.workflow == "teacher_l1" else data.modes
+        return variants, modes
+
+    @app.post("/api/materials", status_code=201)
+    def create_material(data: MaterialInput, auth=Depends(teacher)):
+        mid = "lesson-" + secrets.token_hex(6)
+        targets = list(dict.fromkeys(data.targets))
+        variants, modes = make_variants(data, targets)
         with connect(path) as db:
-            modes = sorted({m for v in variants.values() for m in v["reconstruction"]["learner_decision"]["methods_selected"]}) if data.workflow == "teacher_l1" else data.modes
             db.execute("INSERT INTO materials VALUES(?,?,?,?,?,?,?,?,?,?,?)", (mid, data.title, data.subject, data.unit, data.source_text, dumps(modes), dumps(targets), dumps(variants), "[]", "draft", now()))
+            return find_material(db, mid, auth)
+
+    @app.post("/api/my-materials", status_code=201)
+    def create_self_material(data: SelfMaterialInput, auth=Depends(learner)):
+        # 자기주도학습: 학생이 직접 넣은 자료를 본인 프로필로 바로 재구성해요. 교사 검토 없이 본인에게만 보여요.
+        sid = auth["student_id"]
+        full = MaterialInput(title=data.title, subject=data.subject, unit=data.unit, source_text=data.source_text, targets=[sid], modes=["easy", "bilingual", "visual"], workflow="teacher_l1")
+        variants, modes = make_variants(full, [sid])
+        mid = "self-" + secrets.token_hex(6)
+        with connect(path) as db:
+            db.execute("INSERT INTO materials VALUES(?,?,?,?,?,?,?,?,?,?,?)", (mid, full.title, full.subject, full.unit, full.source_text, dumps(modes), dumps([sid]), dumps(variants), dumps([sid]), "published", now()))
             return find_material(db, mid, auth)
 
     @app.patch("/api/materials/{mid}/review")

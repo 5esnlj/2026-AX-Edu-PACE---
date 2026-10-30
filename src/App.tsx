@@ -48,6 +48,7 @@ import {
   Students,
 } from "./pages/Learning";
 import { CreateMaterial, MaterialDetail, Materials } from "./pages/Materials";
+import { SelfStudy } from "./pages/SelfStudy";
 import { QuizPage, Quizzes } from "./pages/Quizzes";
 import { TeacherDiagnostic } from "./pages/TeacherDiagnostic";
 import { TranslationReview } from "./pages/TranslationReview";
@@ -221,7 +222,10 @@ function Layout() {
   const nav = user.role === "teacher" ? teacherNav : studentNav;
   const current =
     nav.find((n) => n.to !== "/app" && location.pathname.startsWith(n.to))
-      ?.label || "교실 홈";
+      ?.label ||
+    (location.pathname.startsWith("/app/self-study")
+      ? "나의 수업 자료"
+      : "교실 홈");
   async function exit() {
     try {
       await logout();
@@ -395,6 +399,14 @@ export function App() {
             <TeacherOnly>
               <TranslationReview />
             </TeacherOnly>
+          }
+        />
+        <Route
+          path="self-study"
+          element={
+            <StudentOnly>
+              <SelfStudy />
+            </StudentOnly>
           }
         />
         <Route path="materials/:id" element={<MaterialDetail />} />
