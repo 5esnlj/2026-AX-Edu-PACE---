@@ -46,7 +46,7 @@ class LearnerProfile(Model):
     display_name: Short | None = None
     grade: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)] | None = None
     native_language: Short | None = None
-    level_scale: Literal["diagnostic_1_6", "app_1_4"] = "diagnostic_1_6"
+    level_scale: Literal["diagnostic_1_6"] = "diagnostic_1_6"
     overall_korean_level: Level | None = None
     skills: Skills = Field(default_factory=Skills)
     academic_korean: Academic = Field(default_factory=Academic)

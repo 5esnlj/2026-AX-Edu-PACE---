@@ -155,9 +155,9 @@ export function CivilTrialLoader({
           <details className="civil-profile-picker">
             <summary>예시 진단 프로필 연결하기 (선택)</summary>
             <p>
-              첨부한 시연용 프로필입니다. 실제 진단이 아니며 기존 1~4단계 기록과
-              환산하지 않습니다. 연결하지 않으면 학생에게 현재 저장된 프로필을
-              사용합니다.
+              첨부한 시연용 프로필입니다. 실제 학생의 새 6수준 진단 결과와
+              구분해서 사용해 주세요. 연결하지 않으면 학생에게 현재 저장된
+              프로필을 사용합니다.
             </p>
             <fieldset disabled={busy}>
               <label className="field">

@@ -23,7 +23,13 @@ import {
   SectionTitle,
 } from "../components";
 import { useSession } from "../session";
-import { languages, type Material, type Quiz, type Report } from "../types";
+import {
+  languages,
+  studentLevelLabel,
+  type Material,
+  type Quiz,
+  type Report,
+} from "../types";
 
 export function Dashboard() {
   const { user } = useSession();
@@ -195,11 +201,11 @@ export function Dashboard() {
               },
               {
                 label: "읽기 자가 점검",
-                value: student!.levels.reading,
-                suffix: "단계",
+                value: studentLevelLabel(student!, "reading"),
+                suffix: "",
                 icon: Languages,
                 tone: "purple",
-                sub: "1~4단계 · 표준화 진단 아님",
+                sub: "시작부터 도달까지 · 6수준 진단",
               },
               {
                 label: "함께하는 언어",
@@ -245,7 +251,7 @@ export function Dashboard() {
                     <tr>
                       <th>학생</th>
                       <th>생활 한국어</th>
-                      <th>학습 한국어</th>
+                      <th>종합 진단</th>
                       <th>학습 지원 참고</th>
                     </tr>
                   </thead>
@@ -266,14 +272,15 @@ export function Dashboard() {
                         </td>
                         <td>
                           <span className="level-pill">
-                            {r.student.everyday}단계
+                            {r.student.diagnostic_summary?.layers.B.state ||
+                              "진단 전"}
                           </span>
                         </td>
                         <td>
                           <span
                             className={`level-pill ${r.student.academic <= 2 ? "level-low" : ""}`}
                           >
-                            {r.student.academic}단계
+                            {studentLevelLabel(r.student)}
                           </span>
                         </td>
                         <td>
@@ -339,7 +346,7 @@ export function Dashboard() {
             )}
             <div className="panel-footnote">
               {isTeacher
-                ? "※ 단계는 합성 예시 또는 자가 점검 값입니다. 학생의 능력을 확정하지 않아요."
+                ? "※ 새 6수준 진단 결과입니다. 교과 이해 확인과 언어 진단은 함께 살펴봐요."
                 : "지금의 점검 결과는 출발점이에요. 언제든 다시 점검할 수 있어요."}
             </div>
           </section>

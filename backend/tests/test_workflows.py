@@ -111,7 +111,7 @@ class WorkflowTests(unittest.TestCase):
         self.client.post(f"/api/materials/{arbitrary['id']}/publish")
         self.assertEqual(self.client.post(f"/api/materials/{arbitrary['id']}/quiz").status_code, 422)
 
-    def test_learning_storage_self_check_and_roadmap(self):
+    def test_learning_storage_and_unassessed_roadmap(self):
         self.login('student')
         data = {'notes': '권리와 의무를 다시 읽어 보기', 'known': ['민주주의'], 'unknown': ['의무']}
         self.assertEqual(self.client.put('/api/learning/lesson-demo', json=data).status_code, 200)
@@ -119,16 +119,9 @@ class WorkflowTests(unittest.TestCase):
         invalid = dict(data, unknown=['민주주의'])
         self.assertEqual(self.client.put('/api/learning/lesson-demo', json=invalid).status_code, 422)
         before = self.client.get('/api/roadmap').json()
-        self.assertNotIn('answer', before['steps'][0])
-        self.client.post('/api/roadmap/words/complete', json={'answer': 1})
-        self.assertFalse(self.client.get('/api/roadmap').json()['steps'][0]['completed'])
-        self.client.post('/api/roadmap/words/complete', json={'answer': 0})
-        self.client.post('/api/roadmap/words/complete', json={'answer': 0})
-        self.assertTrue(self.client.get('/api/roadmap').json()['steps'][0]['completed'])
-        self.assertEqual(self.client.post('/api/diagnostic', json={'listening': 5, 'speaking': 3, 'reading': 3, 'writing': 3, 'everyday': 4}).status_code, 422)
-        self.client.post('/api/diagnostic', json={'listening': 3, 'speaking': 3, 'reading': 3, 'writing': 3, 'everyday': 4})
-        self.assertEqual(self.client.get('/api/roadmap').json()['recommended'], 'concepts')
-        self.assertEqual(self.client.get('/api/session').json()['student']['diagnostic_source'], 'self')
+        self.assertTrue(before['needs_diagnostic'])
+        self.assertEqual(self.client.post('/api/diagnostic', json={'reading': 4}).status_code, 405)
+        self.assertEqual(self.client.get('/api/session').json()['student']['diagnostic_source'], 'unassessed')
 
     def test_glossary_unknown_language_and_message_scope(self):
         self.login()

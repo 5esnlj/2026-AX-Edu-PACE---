@@ -1,0 +1,107 @@
+{
+  "student_id": "student-a",
+  "display_name": "학생 A",
+  "grade": "중학교 1학년",
+  "background": "중국 이주배경학생",
+  "assessment": {
+    "overall_level": 5,
+    "domain_levels": {
+      "listening": "5+",
+      "reading": "5",
+      "writing": "5",
+      "speaking": "4+"
+    },
+    "domain_evidence": {
+      "listening": {
+        "level_rule": "수준 5까지 연속 P, 수준 6 B → 5+",
+        "items": "듣-11 정답, 듣-12 오답"
+      },
+      "reading": {
+        "level_rule": "수준 4 B·수준 5 P 보정; 수준 6 F → 5",
+        "items": "읽-07 정답, 읽-08 오답, 읽-09·10 정답, 읽-11·12 오답"
+      },
+      "writing": {
+        "level_rule": "수준 5까지 연속 P, 수준 6 F → 5",
+        "items": "쓰-6은 5점으로 F"
+      },
+      "speaking": {
+        "level_rule": "수준 4까지 연속 P, 수준 5 B(7점) → 4+",
+        "items": "말-5는 R3 또는 R4가 2 미만이라 B"
+      }
+    },
+    "layer_profile": {
+      "B": {
+        "score": "6/6",
+        "ratio": 1.0,
+        "stage": "M6 안정"
+      },
+      "T1": {
+        "score": "6/6",
+        "ratio": 1.0,
+        "stage": "M6 안정"
+      },
+      "T2": {
+        "score": "6/6",
+        "ratio": 1.0,
+        "stage": "M6 안정"
+      },
+      "T3": {
+        "score": "5/6",
+        "ratio": 0.83,
+        "stage": "M6 안정"
+      },
+      "C": {
+        "score": "6.5/12",
+        "ratio": 0.54,
+        "stage": "M4 형성 중"
+      }
+    },
+    "bics_calp_gap": {
+      "value": 0.46,
+      "interpretation": "중간 격차 (M6 → M4)"
+    },
+    "bottleneck": "C",
+    "bottleneck_finding": "B~T3는 안정. 교과 개념어와 설명 구조(원인-결과, 주장-근거) 지원으로 이어가며, 말하기 산출 지원도 함께 계획.",
+    "calp_scoring_detail": "듣기 3 + 읽기 2 + 쓰-5 P 1 + 쓰-6 F 0 + 말-5 B 0.5 + 말-6 F 0 = 6.5점",
+    "subjects": [
+      {
+        "name": "국어",
+        "t3": "정답(듣-07)",
+        "c5": "정답(읽-09)",
+        "c6": "정답(듣-11)",
+        "output": "6",
+        "evidence": "쓰-4 P, 말-6(수준 6) F",
+        "flag": "이해>표현"
+      },
+      {
+        "name": "수학",
+        "t3": "정답(듣-08)",
+        "c5": "정답(읽-10)",
+        "c6": "오답(듣-12)",
+        "output": "5",
+        "evidence": "말-5(수준 5) B",
+        "flag": "이해>표현"
+      },
+      {
+        "name": "과학",
+        "t3": "정답(읽-07)",
+        "c5": "정답(듣-09)",
+        "c6": "오답(읽-11)",
+        "output": "5",
+        "evidence": "말-4 P, 쓰-5 P",
+        "flag": ""
+      },
+      {
+        "name": "사회",
+        "t3": "오답(읽-08)",
+        "c5": "정답(듣-10)",
+        "c6": "오답(읽-12)",
+        "output": "≤3",
+        "evidence": "쓰-6(수준 6) F",
+        "flag": "추측 의심·교과 편차"
+      }
+    ],
+    "subject_representative_level": 5,
+    "social_subject_note": "사회는 T3 오답인데 C(5) 정답으로 추측 의심. S는 ≤3으로 두고 재시행·관찰. 종합 수준과 차이가 2(≤3은 3으로 계산)라 교과 편차 표시 후 해당 교과 학습 경험 확인."
+  }
+}

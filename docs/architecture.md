@@ -93,13 +93,13 @@ PDF는 `pypdf`로 텍스트를 추출합니다. 스캔본은 오류와 직접 �
 - 생활·학습 한국어 격차만으로 인지 능력이나 개념 이해를 판정하지 않습니다.
 - 4문항 규칙은 타당도가 검증되지 않았습니다. 난이도·배경 지식·상황 익숙함도 영향을 줍니다.
 
-기존 자가 점검은 **1~4단계**입니다. 교사용 L1 프로필은 첨부 진단의 **1~6단계**를 별도로 보존하며 서로 변환하지 않습니다. 상세 재구성 규칙은 첨부 JSON을 사용하고, 빈 어휘 사전에서 위계·수준을 추정하지 않습니다.
+한국어 진단은 첨부 36문항을 기반으로 한 **6수준**입니다. 기존 4단계 기록은 삭제하고 환산하지 않습니다. 새 진단의 영역·종합·교과·병목 정보가 L1과 L3에 연결됩니다. [판정·채점·저장 상세](six-level-learning-path.md)를 참고하세요. 상세 재구성 규칙은 첨부 JSON을 사용하고, 빈 어휘 사전에서 위계·수준을 추정하지 않습니다.
 
 ## 데이터 모델
 
 | 테이블                | 내용                                                  |
 | --------------------- | ----------------------------------------------------- |
-| `students`            | 합성 이름·언어·학년·영역별 단계·생활 단계·기록 출처   |
+| `students`            | 합성 이름·언어·학년·6수준 영역 결과·진단 요약·출처    |
 | `l1_profiles`         | 교사가 학생별로 연결한 별도 L1 진단 프로필·갱신 시각  |
 | `sessions`            | 무작위 토큰·역할·학생 ID·발급 시각(1일 만료)          |
 | `materials`           | 원문·대상·지원 방식·variant·검토·상태                 |
@@ -107,7 +107,9 @@ PDF는 `pypdf`로 텍스트를 추출합니다. 스캔본은 오류와 직접 �
 | `quizzes`             | 자료별 문항과 서버 전용 정답·해설                     |
 | `attempts`            | 학생별 응답·참고 신호·예시 여부·시각                  |
 | `learning`            | 학생·자료별 메모·아는/더 배울 단어                    |
-| `progress`            | 학생·활동별 완료 기록                                 |
+| `diagnostic_attempts` | 새 6수준 응답·임시저장·영역 진행·교사 채점            |
+| `diagnostic_audio`    | 수행 과제별 녹음·MIME·소유 진단                       |
+| `learning_paths`      | 진단 결과 해시·규칙/Solar 경로·활동 기록              |
 | `messages`            | 해당 학생과 교사의 내부 대화                          |
 | `invitations`         | 코드·발급·만료 시각(가입 미연결)                      |
 
@@ -115,28 +117,33 @@ PDF는 `pypdf`로 텍스트를 추출합니다. 스캔본은 오류와 직접 �
 
 ## API 경계
 
-| 경로                                                        | 접근·기능                         |
-| ----------------------------------------------------------- | --------------------------------- |
-| `GET /api/health`, `GET /api/demo`                          | 상태·공개 합성 예시 목록          |
-| `POST /api/demo/session`, `GET/DELETE /api/session`         | 데모 입장·세션·퇴장               |
-| `GET /api/students`, `POST /api/invitations`                | 교사 학생 목록·초대 코드          |
-| `GET/PUT/DELETE /api/students/{sid}/reconstruction-profile` | 교사 전용 L1 프로필               |
-| `GET /api/l1/example-profile`                               | 교사 전용 첨부 예시 프로필        |
-| `POST /api/diagnostic`                                      | 학생 자가 점검                    |
-| `POST /api/extract`, `POST /api/materials`                  | 교사 입력·생성                    |
-| `GET /api/materials`, `GET /api/materials/{id}`             | 역할·수신자별 조회                |
-| `PATCH /api/materials/{id}/review`, `POST .../publish`      | 교사 검토·배포                    |
-| `GET /api/glossary`, `POST /api/glossary/check`             | 대역표·교사 후보 비교             |
-| `GET /api/translation-review/glossary`                      | 교사 전용 이미지 대역표·지원 언어 |
-| `POST/GET /api/translation-reviews`                         | 교사 L2 분석·검토 이력 목록       |
-| `GET /api/translation-reviews/{id}`                         | 교사 검토 당시 입력·결과 조회     |
-| `POST /api/materials/{id}/quiz`                             | 교사 문항 생성                    |
-| `GET /api/quizzes`, `GET /api/quizzes/{id}`                 | 수신 문항 조회                    |
-| `POST /api/quizzes/{id}/submit`                             | 학생 제출·채점                    |
-| `GET /api/reports`                                          | 교사 응답 근거·진행 현황          |
-| `GET/PUT /api/learning/{id}`                                | 학생 단어장·메모                  |
-| `GET /api/roadmap`, `POST /api/roadmap/{id}/complete`       | 추천·활동 확인                    |
-| `GET/POST /api/messages`                                    | 해당 학생 대화                    |
+| 경로                                                                   | 접근·기능                         |
+| ---------------------------------------------------------------------- | --------------------------------- |
+| `GET /api/health`, `GET /api/demo`                                     | 상태·공개 합성 예시 목록          |
+| `POST /api/demo/session`, `GET/DELETE /api/session`                    | 데모 입장·세션·퇴장               |
+| `GET /api/students`, `POST /api/invitations`                           | 교사 학생 목록·초대 코드          |
+| `GET/PUT/DELETE /api/students/{sid}/reconstruction-profile`            | 교사 전용 L1 프로필               |
+| `GET /api/l1/example-profile`                                          | 교사 전용 첨부 예시 프로필        |
+| `GET /api/diagnostic`, `POST /api/diagnostic/start`                    | 학생의 현재 진단·시작·재개        |
+| `PUT /api/diagnostic/{id}/draft`, `POST .../submit`                    | 학생 임시저장·순서에 맞는 제출    |
+| `POST/GET /api/diagnostic/{id}/audio/{qid}`                            | 말하기 녹음 업로드·학생/교사 조회 |
+| `GET /api/students/{id}/diagnostic`, `POST /api/diagnostic/{id}/grade` | 교사 진단 조회·수행 채점          |
+| `POST /api/extract`, `POST /api/materials`                             | 교사 입력·생성                    |
+| `GET /api/materials`, `GET /api/materials/{id}`                        | 역할·수신자별 조회                |
+| `PATCH /api/materials/{id}/review`, `POST .../publish`                 | 교사 검토·배포                    |
+| `GET /api/glossary`, `POST /api/glossary/check`                        | 대역표·교사 후보 비교             |
+| `GET /api/translation-review/glossary`                                 | 교사 전용 이미지 대역표·지원 언어 |
+| `POST/GET /api/translation-reviews`                                    | 교사 L2 분석·검토 이력 목록       |
+| `GET /api/translation-reviews/{id}`                                    | 교사 검토 당시 입력·결과 조회     |
+| `POST /api/materials/{id}/quiz`                                        | 교사 문항 생성                    |
+| `GET /api/quizzes`, `GET /api/quizzes/{id}`                            | 수신 문항 조회                    |
+| `POST /api/quizzes/{id}/submit`                                        | 학생 제출·채점                    |
+| `GET /api/reports`                                                     | 교사 응답 근거·진행 현황          |
+| `GET/PUT /api/learning/{id}`                                           | 학생 단어장·메모                  |
+| `GET /api/roadmap`, `POST /api/roadmap/generate`                       | 학생 현재 경로·활동 제안          |
+| `POST /api/roadmap/{id}/steps/{step_id}`                               | 학생 활동 기록 저장               |
+| `GET /api/students/{id}/roadmap`                                       | 교사 배움길·학습 기록 조회        |
+| `GET/POST /api/messages`                                               | 해당 학생 대화                    |
 
 요청·응답 스키마는 API 서버의 `/docs`에서 확인합니다.
 

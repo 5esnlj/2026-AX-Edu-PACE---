@@ -55,12 +55,12 @@ class L1ExampleTests(unittest.TestCase):
             self.assertTrue(blocks["q1b"]["source"].startswith("____"))
             self.assertLess(data["source_text"].index(blocks["q3"]["source"]), data["source_text"].index(blocks["goal"]["source"]))
 
-    def test_demo_keeps_scale_separation_and_shared_reference_precedence(self):
-        request = request_for(LearnerProfile(native_language="몽골어", level_scale="app_1_4", skills={"reading": 2}))
+    def test_demo_keeps_unknown_levels_and_shared_reference_precedence(self):
+        request = request_for(LearnerProfile(native_language="몽골어", level_scale="diagnostic_1_6", skills={"reading": None}))
         output = normalize_output(demo_output(request), request)
         self.assertFalse(any(s["swaps"] for s in output["key_sentences"]))
         self.assertTrue(any(s["explanation"] for s in output["key_sentences"]))
-        self.assertEqual(output["profile_context"]["level_scale"], "app_1_4")
+        self.assertEqual(output["profile_context"]["level_scale"], "diagnostic_1_6")
         defendant = next(t for t in output["vocabulary"] if t["term"] == "피고")
         self.assertEqual(defendant["translation"], "хэрэгтэн")
         self.assertEqual(defendant["translation_status"], "review")

@@ -11,7 +11,13 @@ import {
   PageHeading,
   SectionTitle,
 } from "../components";
-import { languages, levelNames, skillLabels, type Report } from "../types";
+import {
+  languages,
+  diagnosticSourceLabel,
+  studentLevelLabel,
+  type Report,
+} from "../types";
+import { DiagnosticResults } from "./Diagnostic";
 
 export function Reports() {
   const { data, error, reload } = useResource<Report[]>("/reports");
@@ -57,31 +63,25 @@ export function Reports() {
                 </p>
               </div>
               <Badge tone="neutral">
-                {student.diagnostic_source === "self"
-                  ? "자가 점검 값"
-                  : "합성 예시 값"}
+                {diagnosticSourceLabel(student.diagnostic_source)}
               </Badge>
             </div>
             <div className="report-summary">
               <div>
                 <small>생활 한국어</small>
                 <strong>
-                  {student.everyday}
-                  <span>단계</span>
+                  {student.diagnostic_summary?.layers.B.state || "진단 전"}
                 </strong>
               </div>
               <div>
-                <small>학습 한국어 평균</small>
-                <strong>
-                  {student.academic}
-                  <span>단계</span>
-                </strong>
+                <small>종합 진단</small>
+                <strong>{studentLevelLabel(student)}</strong>
               </div>
               <div>
                 <small>배움길 완료</small>
                 <strong>
                   {report.completed_steps}
-                  <span>/ 4개</span>
+                  <span>/ {report.total_steps}개</span>
                 </strong>
               </div>
               <div>
@@ -92,27 +92,20 @@ export function Reports() {
                 </strong>
               </div>
             </div>
-            <div className="skills-grid">
-              {Object.entries(student.levels).map(([key, value]) => (
-                <div key={key}>
-                  <div>
-                    <span>{skillLabels[key as keyof typeof skillLabels]}</span>
-                    <strong>{value}단계</strong>
-                  </div>
-                  <div className="skill-meter">
-                    {[1, 2, 3, 4].map((n) => (
-                      <span key={n} className={n <= value ? "filled" : ""} />
-                    ))}
-                  </div>
-                  <small>{levelNames[value - 1]}</small>
-                </div>
-              ))}
-            </div>
+            <Link
+              className="btn secondary"
+              to={`/app/students/${student.id}/diagnostic`}
+            >
+              6수준 진단 보기·채점 및 배움길 확인
+            </Link>
             <p className="panel-footnote">
-              영역 평균은 현황을 보기 위한 단순 평균입니다. 언어·개념 어려움은
-              아래 응답 근거로 별도 살펴봅니다.
+              종합 수준은 네 영역의 중앙값과 최저 영역을 함께 반영합니다. 채점
+              전에는 확정하지 않습니다.
             </p>
           </section>
+          {student.diagnostic_summary && (
+            <DiagnosticResults result={student.diagnostic_summary} teacher />
+          )}
           <section className="panel">
             <SectionTitle title="이해 확인으로 살펴본 지원 방향" />
             {attempt ? (

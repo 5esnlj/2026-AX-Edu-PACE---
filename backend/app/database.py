@@ -75,18 +75,55 @@ def initialize(path: str):
           code TEXT PRIMARY KEY, created_at TEXT NOT NULL, expires_at TEXT NOT NULL
         );
         """)
+        # One-way migration requested by the user: discard 1–4 scores, never rescale them.
+        columns = {r[1] for r in db.execute("PRAGMA table_info(students)")}
+        if "level_scale" not in columns:
+            db.execute("ALTER TABLE students ADD COLUMN level_scale TEXT NOT NULL DEFAULT 'legacy_1_4'")
+        if "diagnostic_summary" not in columns:
+            db.execute("ALTER TABLE students ADD COLUMN diagnostic_summary TEXT")
+        db.execute("UPDATE students SET levels=?,everyday=0,diagnostic_source='unassessed',level_scale='diagnostic_1_6',diagnostic_summary=NULL WHERE level_scale='legacy_1_4'", (dumps(dict.fromkeys(['listening','speaking','reading','writing'], 0)),))
+        db.execute("DELETE FROM l1_profiles WHERE json_extract(profile, '$.level_scale')='app_1_4'")
+        # Drop embedded four-level scores in old material snapshots as well; keep lesson content.
+        for row in db.execute("SELECT id,variants FROM materials").fetchall():
+            variants = json.loads(row["variants"])
+            changed = False
+            for variant in variants.values():
+                if variant.get("level_scale") != "diagnostic_1_6":
+                    variant.update(level=0, level_scale="diagnostic_1_6")
+                    changed = True
+                reconstruction = variant.get("reconstruction", {})
+                if reconstruction.get("profile_context", {}).get("level_scale") == "app_1_4":
+                    reconstruction["profile_context"].update(source="app", level_scale="diagnostic_1_6", bottlenecks=[], daily_korean_support=None)
+                    reconstruction["learner_decision"].update(diagnosed_level=None, skill_profile=dict.fromkeys(['listening','reading','writing','speaking']), subject_profile_used={}, rationale=["새 6수준 진단 전입니다. 이 자료의 본문은 기존 검토본입니다."])
+                    for term in reconstruction.get("vocabulary", []):
+                        term["learner_level"] = None
+                    reconstruction["warnings"] = [w for w in reconstruction.get("warnings", []) if "1~4" not in w]
+                    changed = True
+            if changed:
+                db.execute("UPDATE materials SET variants=? WHERE id=?", (dumps(variants), row["id"]))
+        db.executescript("""
+        CREATE TABLE IF NOT EXISTS diagnostic_attempts (
+          id TEXT PRIMARY KEY, student_id TEXT NOT NULL REFERENCES students(id), state TEXT NOT NULL,
+          created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS diagnostic_audio (
+          attempt_id TEXT NOT NULL REFERENCES diagnostic_attempts(id), question_id TEXT NOT NULL,
+          mime_type TEXT NOT NULL, content BLOB NOT NULL, PRIMARY KEY(attempt_id,question_id)
+        );
+        CREATE TABLE IF NOT EXISTS learning_paths (
+          id TEXT PRIMARY KEY, student_id TEXT NOT NULL REFERENCES students(id), fingerprint TEXT NOT NULL,
+          result TEXT NOT NULL, progress TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL
+        );
+        """)
         if db.execute("SELECT count(*) FROM students").fetchone()[0]:
             return
-        students = [
-            ("std-1", "누리", "vi", {"listening": 3, "speaking": 3, "reading": 2, "writing": 2}, 4),
-            ("std-2", "티무르", "uz", {"listening": 2, "speaking": 2, "reading": 1, "writing": 1}, 3),
-            ("std-3", "사라", "en", {"listening": 4, "speaking": 4, "reading": 3, "writing": 3}, 4),
-            ("std-4", "나란", "mn", {"listening": 3, "speaking": 2, "reading": 2, "writing": 1}, 3),
-            ("std-5", "아린", "bn", {"listening": 2, "speaking": 2, "reading": 1, "writing": 2}, 3),
-            ("std-6", "민준", "vi", {"listening": 4, "speaking": 3, "reading": 3, "writing": 2}, 4),
-        ]
+        identities = [("std-1", "누리", "vi"), ("std-2", "티무르", "uz"),
+                      ("std-3", "사라", "en"), ("std-4", "나란", "mn"),
+                      ("std-5", "아린", "bn"), ("std-6", "민준", "vi")]
+        students = [(sid, name, language, dict.fromkeys(['listening','speaking','reading','writing'], 0), 0)
+                    for sid, name, language in identities]
         for sid, name, language, levels, everyday in students:
-            db.execute("INSERT INTO students(id,name,language,grade,levels,everyday) VALUES(?,?,?,?,?,?)", (sid, name, language, "중학교 1학년 · 3반", dumps(levels), everyday))
+            db.execute("INSERT INTO students(id,name,language,grade,levels,everyday,level_scale,diagnostic_source) VALUES(?,?,?,?,?,?,'diagnostic_1_6','unassessed')", (sid, name, language, "중학교 1학년 · 3반", dumps(levels), everyday))
         agent = DemoLearningAgent()
         targets = [s[0] for s in students]
         variants = {sid: agent.reconstruct(SAMPLE_TEXT, levels["reading"], language, ["easy", "bilingual", "visual"]) for sid, _, language, levels, _ in students}

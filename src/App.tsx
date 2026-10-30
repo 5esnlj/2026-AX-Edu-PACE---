@@ -50,6 +50,7 @@ import {
 } from "./pages/Learning";
 import { CreateMaterial, MaterialDetail, Materials } from "./pages/Materials";
 import { QuizPage, Quizzes } from "./pages/Quizzes";
+import { TeacherDiagnostic } from "./pages/TeacherDiagnostic";
 import { TranslationReview } from "./pages/TranslationReview";
 import { useSession } from "./session";
 import type { Role, Student } from "./types";
@@ -412,6 +413,14 @@ export function App() {
           element={
             <TeacherOnly>
               <Students />
+            </TeacherOnly>
+          }
+        />
+        <Route
+          path="students/:id/diagnostic"
+          element={
+            <TeacherOnly>
+              <TeacherDiagnostic />
             </TeacherOnly>
           }
         />

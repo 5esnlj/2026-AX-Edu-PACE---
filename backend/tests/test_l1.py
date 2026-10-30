@@ -71,7 +71,7 @@ class L1Tests(unittest.TestCase):
             return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(output, ensure_ascii=False)}}]})
         return SolarLearningAgent(transport=httpx.MockTransport(handler))
 
-    def test_profile_import_is_teacher_only_persistent_and_does_not_change_app_scale(self):
+    def test_profile_import_is_teacher_only_persistent_and_does_not_override_diagnostic_results(self):
         client = self.client()
         endpoint = "/api/students/std-1/reconstruction-profile"
         self.assertEqual(client.get(endpoint).status_code, 401)
@@ -81,7 +81,7 @@ class L1Tests(unittest.TestCase):
         self.assertEqual(client.get("/api/l1/example-profile").status_code, 403)
         self.login(client)
         before = client.get("/api/students").json()
-        self.assertEqual(client.get(endpoint).json()["profile"]["level_scale"], "app_1_4")
+        self.assertEqual(client.get(endpoint).json()["profile"]["level_scale"], "diagnostic_1_6")
         response = client.put(endpoint, json=sample_profile())
         self.assertEqual(response.status_code, 200, response.text)
         self.assertEqual(response.json()["profile"]["level_scale"], "diagnostic_1_6")
@@ -207,7 +207,7 @@ class L1Tests(unittest.TestCase):
         with self.assertRaises(ValueError):
             normalize_output(raw, request)
 
-    def test_demo_fallback_stays_on_app_scale_and_works_without_api_key(self):
+    def test_demo_fallback_stays_unassessed_and_works_without_api_key(self):
         with patch.dict(os.environ, {"UPSTAGE_API_KEY": ""}):
             client = self.client()
         self.login(client)
@@ -215,7 +215,7 @@ class L1Tests(unittest.TestCase):
         self.assertEqual(response.status_code, 201, response.text)
         variant = response.json()["variants"]["std-1"]
         self.assertEqual(variant["provider"], "demo")
-        self.assertEqual(variant["reconstruction"]["profile_context"]["level_scale"], "app_1_4")
+        self.assertEqual(variant["reconstruction"]["profile_context"]["level_scale"], "diagnostic_1_6")
         self.assertIsNone(variant["reconstruction"]["learner_decision"]["diagnosed_level"])
         self.assertEqual(variant["reconstruction"]["profile_context"]["bottlenecks"], [])
 

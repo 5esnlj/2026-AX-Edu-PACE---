@@ -45,11 +45,11 @@ export function TeacherL1Review({
         <p>
           {data.profile_context.source === "teacher"
             ? "교사가 등록한 L1 프로필"
-            : "기존 앱 참고 기록"}
+            : data.profile_context.source === "diagnostic"
+              ? "새 6수준 진단 결과"
+              : "진단 전 참고 프로필"}
           {" · "}
-          {data.profile_context.level_scale === "diagnostic_1_6"
-            ? "1~6단계 척도"
-            : "1~4단계 척도"}
+          6수준 척도
         </p>
         <p>
           종합 단계: {decision.diagnosed_level ?? "진단 정보 없음"} · 모국어:{" "}
@@ -440,8 +440,9 @@ function L1ProfileEditor({
         적용됩니다.
       </p>
       <Notice>
-        기존 앱 기록은 1~4단계이며, 팀원의 진단 프로필은 1~6단계입니다. 서로
-        변환하거나 기존 점검 결과를 덮어쓰지 않습니다.
+        새 6수준 진단 결과를 기본으로 연결합니다. 별도 등록하는 프로필도
+        6수준이어야 합니다. 학생이 새 진단 응답을 제출하면 이 별도 프로필을
+        해제하고 최신 결과를 사용합니다.
       </Notice>
       <label className="field">
         <span>팀원의 learners.json 불러오기</span>
@@ -505,7 +506,7 @@ function L1ProfileEditor({
       </label>
       <p>
         종합 진단: {String(profile.overall_korean_level ?? "정보 없음")} · 척도:{" "}
-        {profile.level_scale === "app_1_4" ? "1~4단계" : "1~6단계"}
+        6수준
       </p>
       <details>
         <summary>교과별 진단과 전체 내용 확인</summary>
