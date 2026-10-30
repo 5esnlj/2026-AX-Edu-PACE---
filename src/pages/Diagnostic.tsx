@@ -400,6 +400,12 @@ export function Diagnostic() {
         수준을 연속해서 통과하지 못하면 다음 영역으로 넘어가요. 임시저장하면
         이어 할 수 있어요.
       </Notice>
+      {attempt?.source && (
+        <Notice>
+          첨부 자료에서 가져온 학생 예시의 진단 결과예요. 새 진단도 시작할 수
+          있어요.
+        </Notice>
+      )}
       {!attempt ? (
         <section className="panel diagnostic-start">
           <h2>나에게 맞는 배움길의 시작</h2>

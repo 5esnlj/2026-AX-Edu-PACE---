@@ -83,7 +83,15 @@ def evaluate(state):
     for q in BANK["items"]:
         if q["domain"] in ("listening", "reading"):
             if q["domain"] in finished:
-                points[q["id"]] = int(responses.get(q["id"]) == q["answer"])
+                points[q["id"]] = (
+                    int(state["reported_correct"][q["id"]])
+                    if q["id"] in state.get("reported_correct", {})
+                    else int(responses.get(q["id"]) == q["answer"])
+                )
+        elif q["id"] in state.get("reported_verdicts", {}):
+            verdict = state["reported_verdicts"][q["id"]]
+            verdicts[q["id"]] = verdict
+            points[q["id"]] = {"P": 1, "B": 0.5, "F": 0}[verdict]
         elif q["id"] in grades:
             verdict = task_verdict(grades[q["id"]]["scores"], q["level"])
             verdicts[q["id"]] = verdict

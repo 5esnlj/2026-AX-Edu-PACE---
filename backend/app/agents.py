@@ -2,7 +2,7 @@
 import re
 from typing import Protocol
 
-LANGUAGES = {"vi": "베트남어", "en": "영어", "uz": "우즈베크어", "mn": "몽골어", "bn": "벵골어"}
+LANGUAGES = {"und": "미확인", "vi": "베트남어", "en": "영어", "uz": "우즈베크어", "mn": "몽골어", "bn": "벵골어"}
 SUBJECTS = ["사회", "과학", "수학", "국어"]
 SAMPLE_TEXT = """민주주의는 국민이 나라의 주인으로서 국가의 중요한 일을 결정하는 정치 제도입니다.
 국민은 선거에서 투표하여 자신을 대표할 사람을 뽑습니다.
@@ -29,7 +29,7 @@ class DemoLearningAgent:
     provider = "demo"
 
     def reconstruct(self, source: str, level: int, language: str, modes: list[str]) -> dict:
-        terms = [dict(t, translation=t["translations"][language], verified=False) for t in GLOSSARY if t["term"] in source]
+        terms = [dict(t, translation=t["translations"].get(language, ""), verified=False) for t in GLOSSARY if t["term"] in source]
         text = source.strip()
         if "easy" in modes and level > 0:
             replacements = {"국가의": "나라의", "정치 제도입니다": "정치 방식이에요", "결정하는": "정하는", "마땅히": "꼭", "뿐만 아니라": "말고도", "포함합니다": "들어가요", "존중하며": "소중하게 생각하며"}

@@ -70,6 +70,12 @@ export type DiagnosticQuestion = {
   review_note?: string;
 };
 export type DiagnosticAttempt = {
+  source?: {
+    file_name: string;
+    description: string;
+    reported_totals: Record<string, number>;
+    reported_mastery_stages: Record<string, string>;
+  } | null;
   id: string;
   stage: string;
   pending: string | null;

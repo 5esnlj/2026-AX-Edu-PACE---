@@ -14,7 +14,8 @@ export type Student = {
   };
   everyday: number;
   academic: number;
-  diagnostic_source: "unassessed" | "diagnostic_partial" | "diagnostic";
+  diagnostic_source:
+    "unassessed" | "diagnostic_partial" | "diagnostic" | "imported_example";
   level_scale: "diagnostic_1_6";
   diagnostic_summary: DiagnosticResult | null;
 };
@@ -121,6 +122,7 @@ export type Message = {
   created_at: string;
 };
 export const languages: Record<string, string> = {
+  und: "미확인",
   vi: "베트남어",
   en: "영어",
   uz: "우즈베크어",
@@ -131,11 +133,13 @@ export const levelNames = ["시작", "초기", "발달", "확장", "연결", "�
 export const levelLabel = (level: number) =>
   level > 0 ? `${level}수준 · ${levelNames[level - 1]}` : "진단 전";
 export const diagnosticSourceLabel = (source: Student["diagnostic_source"]) =>
-  source === "diagnostic"
-    ? "6수준 진단 완료"
-    : source === "diagnostic_partial"
-      ? "6수준 진단 중"
-      : "진단 전";
+  source === "imported_example"
+    ? "첨부 PDF 예시"
+    : source === "diagnostic"
+      ? "6수준 진단 완료"
+      : source === "diagnostic_partial"
+        ? "6수준 진단 중"
+        : "진단 전";
 export const studentLevelLabel = (student: Student, domain?: string) => {
   const r = student.diagnostic_summary;
   if (!r) return "진단 전";
