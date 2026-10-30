@@ -4,7 +4,6 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardCheck,
-  FileText,
   GraduationCap,
   Heart,
   HelpCircle,
@@ -200,7 +199,6 @@ const teacherNav = [
   { to: "/app/students", label: "학생 관리", icon: Users },
   { to: "/app/reports", label: "학습 리포트", icon: ClipboardCheck },
   { to: "/app/glossary", label: "교과어 검토", icon: Languages },
-  { to: "/app/quizzes", label: "이해 확인 문항", icon: FileText },
   { to: "/app/messages", label: "메시지", icon: MessageCircle },
 ];
 const studentNav = [

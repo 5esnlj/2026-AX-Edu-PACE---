@@ -106,6 +106,9 @@ export function Materials() {
                 <Languages size={18} />
                 오역 탐지
               </Link>
+              <a className="btn secondary" href="/convert/view.html?view=make">
+                변환 예시 (민사 재판)
+              </a>
             </div>
           )
         }
