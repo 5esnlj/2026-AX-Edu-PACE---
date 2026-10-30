@@ -6,6 +6,9 @@ __pycache__/
 .venv/
 .env
 .env.local
+.env.*
+!.env.example
+.vs/
 .data/
 playwright-report/
 test-results/

@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type DragEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { api, useResource } from "../api";
+import { api, useResource, useAgentHealth } from "../api";
 import {
   Avatar,
   Badge,
@@ -168,6 +168,7 @@ export function Materials() {
 }
 
 export function CreateMaterial() {
+  const { data: agent } = useAgentHealth();
   const { data: students, error, reload } = useResource<Student[]>("/students");
   const sample = useResource<{ sample_text: string }>("/demo");
   const [step, setStep] = useState(1);
@@ -441,9 +442,13 @@ export function CreateMaterial() {
                 ))}
               </div>
               <Notice>
-                현재는 규칙 기반 데모입니다. 정치 단원 예제에는 준비된 쉬운 글을
-                사용하며, 다른 자료는 제한적인 낱말 치환만 수행합니다. 전문적인
-                AI 재구성으로 간주하지 마세요.
+                {agent?.provider === "solar"
+                  ? agent.configured
+                    ? "Solar로 원문을 학생 수준에 맞춰 재구성하고 교과어 번역을 만듭니다. 원문·읽기 단계·대상 언어가 Upstage로 전송됩니다. 생성에는 시간이 걸릴 수 있으며 API 사용료가 발생할 수 있습니다."
+                    : "Solar API 키가 아직 설정되지 않았습니다. 서버 설정 후 다시 실행해 주세요."
+                  : agent
+                    ? "규칙 기반 데모입니다. 정치 단원 예제에는 준비된 쉬운 글을 사용하며, 다른 자료는 제한적인 낱말 치환만 수행합니다."
+                    : "AI 설정을 확인하고 있습니다."}
               </Notice>
               <div className="selection-summary">
                 <h3>선택한 학생 {targets.length}명</h3>
@@ -493,7 +498,7 @@ export function CreateMaterial() {
                 ) : (
                   <Sparkles size={17} />
                 )}
-                학생별 자료 생성
+                {busy ? "학생별 자료를 만들고 있어요…" : "학생별 자료 생성"}
               </button>
             )}
           </div>

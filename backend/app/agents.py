@@ -1,4 +1,4 @@
-"""Deterministic demo agents. Replace through LearningAgent; no external AI is called."""
+"""LearningAgent interface, offline demo implementation and assessment rules."""
 import re
 from typing import Protocol
 
@@ -71,7 +71,7 @@ def assess(questions: list[dict], answers: dict[str, int]) -> dict:
     else:
         kind, label = "observe", "추가 관찰이 필요해요"
         recommendation = "응답이 혼재되어 있어요. 학생과 짧게 대화하고 다른 문항으로 확인해 주세요."
-    return {"results": results, "score": sum(r["correct"] for r in results), "total": len(results), "standard": standard, "reduced": reduced, "kind": kind, "label": label, "recommendation": recommendation, "caution": "4개 데모 문항의 학습 지원 참고 신호입니다. 표준화된 진단이나 인지 능력 판정이 아니며, 문항 난이도 차이도 결과에 영향을 줄 수 있습니다."}
+    return {"results": results, "score": sum(r["correct"] for r in results), "total": len(results), "standard": standard, "reduced": reduced, "kind": kind, "label": label, "recommendation": recommendation, "caution": "4개 문항의 학습 지원 참고 신호입니다. 표준화된 진단이나 인지 능력 판정이 아니며, 문항 난이도 차이도 결과에 영향을 줄 수 있습니다."}
 
 ROADMAP = [
     {"id": "words", "title": "교과어와 친해지기", "description": "수업에서 만난 낱말을 쉬운 뜻과 연결해요.", "minutes": 5, "prompt": "‘선거’의 뜻은 무엇인가요?", "options": ["대표할 사람을 뽑는 일", "친구와 운동하는 일", "그림을 그리는 일"], "answer": 0},
