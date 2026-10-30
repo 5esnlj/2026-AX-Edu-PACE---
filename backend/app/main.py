@@ -96,7 +96,14 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
         yield
 
     app = FastAPI(title="이음 Learning API", version="0.1.0", lifespan=lifespan)
-    agent = learning_agent or DemoLearningAgent()
+    if learning_agent is not None:
+        agent = learning_agent
+
+    elif os.getenv("IEUM_AGENT_PROVIDER", "demo").lower() == "solar":
+        agent = SolarLearningAgent()
+
+    else:
+        agent = DemoLearningAgent()
 
     @app.middleware("http")
     async def same_origin_mutations(request: Request, call_next):
