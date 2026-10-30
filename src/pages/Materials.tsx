@@ -22,10 +22,22 @@ import {
   VolumeX,
 } from "lucide-react";
 import { useEffect, useState, type DragEvent } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { api, useResource, useAgentHealth } from "../api";
 import { TeacherL1Review } from "./TeacherL1";
 import { MaterialTools } from "./MaterialTools";
+import {
+  CivilTrialCard,
+  CivilTrialLoader,
+  SourcePdfPreview,
+  SupportedReading,
+  type CivilTrialExample,
+} from "./ReconstructionSupport";
 import { toL1Edits, type L1Edits } from "../l1";
 import {
   Avatar,
@@ -76,6 +88,7 @@ export function Materials() {
           )
         }
       />
+      {teacher && <CivilTrialCard />}
       <div className="toolbar">
         <div className="filter-tabs">
           {["전체", "사회", "과학", "수학", "국어"].map((s) => (
@@ -115,7 +128,7 @@ export function Materials() {
                 className="material-card"
               >
                 <div className={`material-cover cover-${m.subject}`}>
-                  <div className="cover-caption">IEUM CLASSROOM</div>
+                  <div className="cover-caption">가나다계단 CLASSROOM</div>
                   <div className="cover-art">
                     <BookOpen size={48} />
                     <span>✦</span>
@@ -172,6 +185,7 @@ export function Materials() {
 }
 
 export function CreateMaterial() {
+  const [query] = useSearchParams();
   const { data: agent } = useAgentHealth();
   const { data: students, error, reload } = useResource<Student[]>("/students");
   const sample = useResource<{ sample_text: string }>("/demo");
@@ -193,7 +207,16 @@ export function CreateMaterial() {
     setTitle("민주주의, 우리 함께 만들어 가요");
     setUnit("민주주의와 시민 참여");
     setSubject("사회");
-    setFilename("이음 예제 자료");
+    setFilename("가나다계단 예제 자료");
+  }
+  function useCivilExample(example: CivilTrialExample) {
+    setSource(example.source_text);
+    setTitle(example.title);
+    setUnit(example.unit);
+    setSubject(example.subject);
+    setFilename("민사 재판 원본 PDF · 210~211쪽");
+    setUseL1(true);
+    toast("민사 재판 예시를 불러왔어요. 원문과 학생을 확인해 주세요.");
   }
   async function upload(file?: File) {
     if (!file) return;
@@ -263,6 +286,11 @@ export function CreateMaterial() {
             <>
               <section className="panel form-panel">
                 <SectionTitle title="01. 어떤 자료로 배울까요?" />
+                <CivilTrialLoader
+                  onUse={useCivilExample}
+                  students={students}
+                  initiallyOpen={query.get("example") === "civil-trial"}
+                />
                 <div className="form-row">
                   <label className="field">
                     교과
@@ -778,6 +806,15 @@ function ReviewMaterial({
           <SectionTitle title="원본 자료">
             <Badge tone="neutral">원본 보존</Badge>
           </SectionTitle>
+          {(variant.source_pdf_url ||
+            variant.reconstruction?.document?.source_pdf_url) && (
+            <SourcePdfPreview
+              url={
+                (variant.source_pdf_url ||
+                  variant.reconstruction?.document?.source_pdf_url)!
+              }
+            />
+          )}
           <div className="original-text">
             {item.source_text.split("\n").map((p, i) => (
               <p key={i}>{p}</p>
@@ -812,9 +849,10 @@ function ReviewMaterial({
                   </p>
                 )}
                 <div className="original-text">
-                  {variant.text.split("\n").map((text, i) => (
-                    <p key={i}>{text}</p>
-                  ))}
+                  <SupportedReading
+                    text={variant.text}
+                    support={variant.reading_support}
+                  />
                 </div>
                 <ConceptCards variant={variant} />
               </details>
@@ -945,27 +983,42 @@ function ConceptCards({ variant }: { variant: Variant }) {
   return (
     !!variant.visuals.length && (
       <div className="concept-cards">
-        {variant.visuals.map((v, i) => (
-          <div key={v.term} className={`concept-card concept-${i}`}>
-            <span>{["◉", "✳", "✦", "⌁"][i % 4]}</span>
-            <strong>{v.term}</strong>
-            <p>{v.meaning}</p>
-            {!!v.items?.length &&
-              (v.kind === "sequence" ? (
-                <ol aria-label={v.alt_text}>
-                  {v.items.map((text, index) => (
-                    <li key={index}>{text}</li>
-                  ))}
-                </ol>
-              ) : (
-                <ul aria-label={v.alt_text}>
-                  {v.items.map((text, index) => (
-                    <li key={index}>{text}</li>
-                  ))}
-                </ul>
-              ))}
-          </div>
-        ))}
+        {variant.visuals.map((v, i) => {
+          const content = (
+            <>
+              <span>{["◉", "✳", "✦", "⌁"][i % 4]}</span>
+              <strong>{v.term}</strong>
+              <p>{v.meaning}</p>
+              {!!v.items?.length &&
+                (v.kind === "sequence" ? (
+                  <ol aria-label={v.alt_text}>
+                    {v.items.map((text, index) => (
+                      <li key={index}>{text}</li>
+                    ))}
+                  </ol>
+                ) : (
+                  <ul aria-label={v.alt_text}>
+                    {v.items.map((text, index) => (
+                      <li key={index}>{text}</li>
+                    ))}
+                  </ul>
+                ))}
+            </>
+          );
+          return v.visible_by_default === false ? (
+            <details
+              key={v.term}
+              className={`concept-card concept-${i} folded-visual`}
+            >
+              <summary>그림으로 보기 · {v.term}</summary>
+              {content}
+            </details>
+          ) : (
+            <div key={v.term} className={`concept-card concept-${i}`}>
+              {content}
+            </div>
+          );
+        })}
       </div>
     )
   );
@@ -1145,10 +1198,15 @@ function ReaderContent({
             <BookOpen size={19} />
           </div>
           <h2>{item.unit || item.title}</h2>
+          {variant.source_pdf_url && (
+            <SourcePdfPreview url={variant.source_pdf_url} />
+          )}
           <div className="reading-body" style={{ fontSize: `${zoom * 19}px` }}>
-            {text.split("\n").map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
+            <SupportedReading
+              key={`${original}-${variant.text}`}
+              text={text}
+              support={original ? [] : variant.reading_support}
+            />
           </div>
           {pictures && <ConceptCards variant={variant} />}
           <div className="reading-bottom">

@@ -27,7 +27,7 @@
 
 ```powershell
 git fetch origin
-git switch feature/teacher-l2-translation-review
+git switch feature/ganada-brand-reconstruction
 .\.venv\Scripts\python.exe -m pip install -r .\backend\requirements.txt
 npm.cmd install
 npm.cmd run dev
@@ -72,6 +72,8 @@ npm.cmd run dev
 - 새 DB 테이블은 `l1_profiles(student_id, profile, updated_at)` 하나입니다. 기존 데이터에 파괴적인 마이그레이션은 없습니다.
 
 ## 호출과 한계
+
+가나다계단 변경에서는 **민사 재판 예시**에 첨부 규칙의 표현별 교체·접힌 설명·원본 PDF 비교를 추가했습니다. 이 예시는 데모에서도 등록한 1~6단계 읽기 프로필에 따라 지원하며 실제 저장·검토·배포 흐름을 사용합니다. [사용법과 구현 범위](ganada-reconstruction.md)를 참고하세요. 아래 일반 원문 데모와 구분됩니다.
 
 Solar 설정 시 L1 자료 생성 한 번에 **학생당 1회** 호출합니다. 입력에는 원문·교과·규칙·사전·익명화한 지원 프로필·해당 원문에 등장하는 단어의 저장 상태가 들어갑니다. 이름·학생 ID는 별도 필드로 전송하지 않으며, 원문과 프로필 메모에 직접 입력한 내용은 전송됩니다. 교사 수정 저장·승인에는 추가 모델 호출이 없습니다.
 

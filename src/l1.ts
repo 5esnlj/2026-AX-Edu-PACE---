@@ -1,9 +1,21 @@
+export type PhraseSwap = { original: string; replacement: string };
+export type ReadingSupport = {
+  id: string;
+  source: string;
+  rewritten: string;
+  swaps: PhraseSwap[];
+  explanation: string;
+  page?: number | null;
+};
 export type L1Sentence = {
   id: string;
   source: string;
   rewritten: string;
   operations: string[];
   rationale: string;
+  swaps?: PhraseSwap[];
+  explanation?: string;
+  fixed?: boolean;
 };
 export type L1Vocabulary = {
   term: string;
@@ -30,6 +42,7 @@ export type L1Visual = {
 };
 export type L1Result = {
   status: string;
+  document?: { source_pdf_url?: string | null };
   learner_decision: {
     diagnosed_level: number | string | null;
     native_language: string;
@@ -57,7 +70,7 @@ export type L1Result = {
   warnings: string[];
 };
 export type L1Edits = {
-  sentences: Pick<L1Sentence, "id" | "rewritten">[];
+  sentences: Pick<L1Sentence, "id" | "rewritten" | "explanation">[];
   vocabulary: Pick<
     L1Vocabulary,
     "term" | "tier" | "action" | "simple_meaning" | "translation"
@@ -69,9 +82,10 @@ export type L1Edits = {
 };
 export function toL1Edits(data: L1Result): L1Edits {
   return {
-    sentences: data.key_sentences.map(({ id, rewritten }) => ({
+    sentences: data.key_sentences.map(({ id, rewritten, explanation }) => ({
       id,
       rewritten,
+      explanation: explanation || "",
     })),
     vocabulary: data.vocabulary.map(
       ({ term, tier, action, simple_meaning, translation }) => ({

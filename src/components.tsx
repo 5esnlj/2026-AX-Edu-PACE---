@@ -19,23 +19,15 @@ import { Link } from "react-router-dom";
 export function Logo({ small = false }: { small?: boolean }) {
   return (
     <div className={`logo ${small ? "small" : ""}`}>
-      <svg
-        width="37"
-        height="38"
-        viewBox="0 0 40 40"
-        fill="none"
-        aria-hidden="true"
-      >
-        <path d="M3 28h10v10H3z" fill="#F0B96E" />
-        <path d="M14 17h10v21H14z" fill="#79B8A4" />
-        <path d="M25 6h10v32H25z" fill="#5B8A76" />
-        <path d="M3 21h10v5H3z" fill="#F2C9BA" />
-        <circle cx="30" cy="2.5" r="2.5" fill="#F0B96E" />
-      </svg>
-      <span>
-        이음<span className="logo-dot">.</span>
-      </span>
-      {!small && <small>함께 자라는 교실</small>}
+      <img
+        src="/logo.svg"
+        className="logo-mark"
+        width="48"
+        height="36"
+        alt=""
+      />
+      <span>가나다계단</span>
+      {!small && <small>배움의 다음 칸을 함께</small>}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import type { L1Result } from "./l1";
+import type { L1Result, ReadingSupport } from "./l1";
 export type Role = "teacher" | "student";
 export type Student = {
   id: string;
@@ -38,6 +38,7 @@ export type Variant = {
     kind?: string;
     items?: string[];
     alt_text?: string;
+    visible_by_default?: boolean;
   }[];
   level: number;
   language: string;
@@ -45,6 +46,8 @@ export type Variant = {
   notice: string;
   native_language?: string;
   reconstruction?: L1Result;
+  source_pdf_url?: string | null;
+  reading_support?: ReadingSupport[];
 };
 export type Material = {
   id: string;

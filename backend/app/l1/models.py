@@ -56,6 +56,11 @@ class LearnerProfile(Model):
     diagnostic_notes: list[Text] = Field(default_factory=list, max_length=10)
 
 
+class PhraseSwap(Model):
+    original: Short
+    replacement: Short
+
+
 class Sentence(Model):
     id: Short
     page: int | None = Field(default=None, ge=1, le=50)
@@ -64,6 +69,9 @@ class Sentence(Model):
     operations: list[Literal["retain", "elaborate", "simplify"]] = Field(min_length=1, max_length=3)
     rationale: Text
     review_required: bool = True
+    swaps: list[PhraseSwap] = Field(default_factory=list, max_length=3)
+    explanation: OptionalText = ""
+    fixed: bool = False
 
 
 class Vocabulary(Model):
@@ -116,6 +124,7 @@ class Document(Model):
     subject: str = Field(max_length=100)
     grade: str = Field(default="", max_length=100)
     source_name: str = Field(default="", max_length=120)
+    source_pdf_url: str | None = Field(default=None, max_length=300)
 
 
 class Recognition(Model):
@@ -161,6 +170,7 @@ class ReconstructionOutput(Model):
 class SentenceEdit(Model):
     id: Short
     rewritten: Text
+    explanation: OptionalText | None = None
 
 
 class VocabularyEdit(Model):

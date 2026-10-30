@@ -422,7 +422,7 @@ export function Dashboard() {
             <span className="insight-icon">
               <Languages size={23} />
             </span>
-            <span className="eyebrow">이음의 작은 인사이트</span>
+            <span className="eyebrow">가나다계단의 배움 이야기</span>
             <h3>
               “한국말을 잘하는데,
               <br />왜 수업이 어려울까요?”
@@ -432,7 +432,7 @@ export function Dashboard() {
               유창함 너머, 학생의 배움을 살펴봐 주세요.
             </p>
             <Link to="/app/about">
-              이음의 설계 원칙 보기
+              가나다계단의 설계 원칙 보기
               <ArrowUpRight size={15} />
             </Link>
           </section>

@@ -1,0 +1,228 @@
+.civil-example-card {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.5rem;
+  border: 1px solid #dce3f5;
+  border-radius: 20px;
+  background: linear-gradient(110deg, #eef3ff, #fff8e9);
+  margin-bottom: 1.5rem;
+}
+.civil-example-card h2 {
+  margin: 0.2rem 0;
+}
+.civil-example-card p {
+  color: #566176;
+}
+.civil-example-card > .btn {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.civil-example-icon {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  flex-shrink: 0;
+  background: #fff;
+  border-radius: 18px;
+  color: #495bc1;
+}
+.civil-eyebrow {
+  color: #76562b;
+  font-size: 12px;
+  font-weight: 700;
+}
+.civil-loader {
+  background: #f6f8ff;
+  border: 1px solid #dce3f5;
+  border-radius: 14px;
+  padding: 1rem;
+  margin-bottom: 1.4rem;
+}
+.civil-loader > summary,
+.source-pdf-preview > summary {
+  font-weight: 700;
+  cursor: pointer;
+}
+.civil-loader p {
+  margin: 0.8rem 0;
+}
+.civil-loader > small {
+  display: block;
+  color: #5c6171;
+  margin-top: 1rem;
+}
+.source-pdf-preview {
+  padding: 1rem;
+  margin: 0.9rem 0;
+  background: #fffaf0;
+  border: 1px solid #e7dfc9;
+  border-radius: 12px;
+}
+.source-pdf-preview > summary svg {
+  margin-right: 0.4rem;
+}
+.source-pdf-preview p {
+  font-size: 13px;
+  color: #645c4b;
+  margin: 0.6rem 0;
+}
+.source-pdf-pages {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.source-pdf-pages a {
+  min-width: 0;
+  text-align: center;
+  color: #354979;
+}
+.source-pdf-pages img {
+  display: block;
+  width: 100%;
+  border: 1px solid #e2e4e8;
+  border-radius: 4px;
+}
+.source-pdf-pages span {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 12px;
+}
+.civil-profile-picker {
+  padding-top: 1rem;
+}
+.civil-profile-picker fieldset {
+  border: 0;
+  padding: 0;
+  margin: 1rem 0;
+  min-width: 0;
+}
+.civil-profile-picker pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  background: white;
+  padding: 1rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.civil-profile-picker .checkbox-line {
+  margin: 1rem 0;
+  align-items: flex-start;
+}
+.phrase-review {
+  margin: 0.7rem 0;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  background: #eff4ff;
+}
+.phrase-review ul {
+  margin: 0.4rem 0;
+}
+.phrase-review .swap-before {
+  color: #6a6273;
+}
+.phrase-review .swap-after {
+  color: #294d89;
+  font-weight: 700;
+}
+.phrase-review-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+}
+.supported-reading {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 2;
+}
+.supported-paragraph {
+  margin-bottom: 1rem;
+}
+.reading-hint {
+  display: block;
+  font-size: 12px;
+  color: #61677c;
+  margin-bottom: 1rem;
+}
+.changed-phrase {
+  display: inline;
+}
+.changed-phrase button {
+  display: inline;
+  padding: 0 0.08em;
+  background: #e8efff;
+  color: inherit;
+  border-bottom: 2px solid #667bd1;
+  border-radius: 3px;
+  line-height: inherit;
+}
+.phrase-original {
+  display: inline;
+  font-size: 0.8em;
+  color: #685771;
+  background: #f4edf9;
+  padding: 0.1em 0.3em;
+  margin-left: 0.3em;
+}
+.reading-explanation {
+  white-space: normal;
+  font-size: 0.8em;
+  line-height: 1.7;
+  background: #fff5d9;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  margin: 0.6rem 0;
+}
+.reading-explanation summary {
+  color: #73541c;
+  cursor: pointer;
+  font-weight: 700;
+}
+.reading-explanation p {
+  margin: 0.5rem 0;
+}
+.folded-visual summary {
+  font-weight: 700;
+  cursor: pointer;
+}
+.folded-visual[open] summary {
+  margin-bottom: 0.8rem;
+}
+@media (max-width: 900px) {
+  .civil-example-card {
+    flex-wrap: wrap;
+  }
+  .civil-example-card > .btn {
+    margin-left: 0;
+  }
+}
+@media (max-width: 540px) {
+  .civil-example-icon {
+    display: none;
+  }
+  .source-pdf-pages {
+    gap: 0.5rem;
+  }
+  .civil-example-card {
+    padding: 1.1rem;
+  }
+}
+@media print {
+  .source-pdf-preview,
+  .reading-hint {
+    display: none;
+  }
+  .changed-phrase button {
+    background: transparent;
+    border-bottom: 1px solid #888;
+  }
+  .phrase-original {
+    display: none;
+  }
+}

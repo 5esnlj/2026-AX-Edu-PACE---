@@ -11,6 +11,7 @@ from pathlib import Path
 from .models import LearnerProfile, ReconstructionEdits, ReconstructionOutput
 from ..agents import GLOSSARY, LANGUAGES
 from ..glossary_data import REFERENCE_GLOSSARY
+from . import civil_trial
 
 ROOT = Path(__file__).resolve().parent
 RULES = json.loads((ROOT / "data/reconstruction_rules.json").read_text(encoding="utf-8"))
@@ -31,6 +32,13 @@ def fallback_profile(student: dict) -> LearnerProfile:
 def split_sentences(source: str) -> list[dict]:
     return [{"id": f"s{i}", "source": text.strip()} for i, text in enumerate(
         (t for t in re.split(r"(?<=[.!?。！？])\s+|\n+", source) if t.strip()), 1)]
+
+
+def source_contexts(source: str) -> list[dict]:
+    if civil_trial.matches(source):
+        return civil_trial.sentence_contexts(split_sentences)
+    return [dict(s, page=None, fixed=bool(re.match(r"^(?:제\s*\d+\s*조|출처\s*[:：]|[‘“\"])", s["source"])), activity=False)
+            for s in split_sentences(source)]
 
 
 def prepare_request(profile: LearnerProfile, source: str, subject: str, title: str,
@@ -58,12 +66,21 @@ def prepare_request(profile: LearnerProfile, source: str, subject: str, title: s
     lexicon["translation_languages"] = REFERENCE_GLOSSARY["languages"]
     if any(e["term"] in source for e in REFERENCE_GLOSSARY["entries"]):
         notes.append(REFERENCE_GLOSSARY["notice"])
+    example = civil_trial.matches(source)
+    if example:
+        notes.append(civil_trial.NOTICE)
+        registered = {e["term"] for e in lexicon["entries"]}
+        lexicon["entries"].extend({"term": e["term"], "translations": e["translations"], "verification": "unreviewed"}
+            for e in civil_trial.terms(REFERENCE_GLOSSARY) if e["term"] not in registered)
     return {
         "learner_profile": safe_profile,
         "profile_source": profile_source,
         "profile_notes": notes,
         "subject": subject, "source_name": title, "source_text": source,
-        "source_sentences": split_sentences(source),
+        "source_sentences": source_contexts(source),
+        "protected_terms": civil_trial.PROTECTED if example else [e["term"] for e in lexicon["entries"] if e["term"] in source],
+        "source_pdf_url": civil_trial.PDF_URL if example else None,
+        "reference_example": example,
         "source_signals": {"possible_process_or_list": bool(cues), "matched_cues": cues, "note": "문자 기반 참고 신호로, 최종 판단 근거가 아닙니다."},
         "reconstruction_rules": RULES, "vocabulary_lexicon": lexicon,
         "vocabulary_state": vocabulary_state or {},
@@ -105,6 +122,54 @@ def _check_concept_preservation(output: dict):
                 raise ValueError("재구성 글에서 핵심 교과 개념어를 유지해 주세요.")
 
 
+def _apply_swaps(sentence: dict, protected: list[str], limit: int):
+    source, edits = sentence["source"], []
+    if len(sentence["swaps"]) > limit:
+        raise ValueError("문장당 표현 교체 수를 초과했습니다.")
+    for swap in sentence["swaps"]:
+        original, replacement = swap["original"], swap["replacement"]
+        if source.count(original) != 1 or len(replacement) > len(original) * 2:
+            raise ValueError("교체 표현은 원문에서 한 위치를 식별하고 원래 길이의 두 배 이하여야 합니다.")
+        start, end = source.index(original), source.index(original) + len(original)
+        for term in protected:
+            for occurrence in re.finditer(re.escape(term), source):
+                if start < occurrence.end() and occurrence.start() < end:
+                    raise ValueError("교과 개념어와 겹치는 표현은 교체할 수 없습니다.")
+        if any(start < b and a < end for a, b, _ in edits):
+            raise ValueError("표현 교체 범위가 겹칩니다.")
+        edits.append((start, end, replacement))
+    text = source
+    for start, end, replacement in sorted(edits, reverse=True):
+        text = text[:start] + replacement + text[end:]
+    return text
+
+
+def _validate_reconstruction(output: dict, request: dict):
+    contexts = {s["id"]: s for s in request["source_sentences"]}
+    profile = request["learner_profile"]
+    band = civil_trial.reading_band(profile)
+    limit = 3 if band == "l2" else 2 if band == "l4" else 1
+    reference_simplifications = set()
+    for sentence in output["key_sentences"]:
+        context = contexts[sentence["id"]]
+        sentence["fixed"] = context.get("fixed", False)
+        sentence["page"] = context.get("page")
+        if sentence["fixed"] and (sentence["rewritten"] != sentence["source"] or sentence["swaps"]):
+            raise ValueError("법 조문·인용·출처는 원문을 유지하고 별도 설명으로 지원해 주세요.")
+        if context.get("activity"):
+            sentence["explanation"] = ""  # Do not attach answer-bearing support to activities.
+        if sentence["swaps"]:
+            sentence["rewritten"] = _apply_swaps(sentence, request["protected_terms"], limit)
+            allowed = civil_trial.candidate_swaps(context, profile) if request.get("reference_example") else []
+            if all(swap in allowed for swap in sentence["swaps"]):
+                reference_simplifications.add(sentence["id"])
+        # Protected terms come from server-owned data, not the model's vocabulary list.
+        for term in request["protected_terms"]:
+            if sentence["rewritten"].count(term) < sentence["source"].count(term):
+                raise ValueError("핵심 교과어를 삭제·대체할 수 없습니다. 별도 쉬운 설명으로 지원해 주세요.")
+    return reference_simplifications
+
+
 def _set_review_state(output: dict, confirmed: bool, edited: bool):
     output["status"] = "teacher_approved" if confirmed else "teacher_review_required"
     output["teacher_review"].update(required=not confirmed, teacher_edits_applied=edited, editable_fields=EDITABLE_FIELDS)
@@ -118,6 +183,7 @@ def _set_review_state(output: dict, confirmed: bool, edited: bool):
 def normalize_output(raw: ReconstructionOutput, request: dict) -> dict:
     output = raw.model_dump()
     _validate_source_links(output, request)
+    reference_simplifications = _validate_reconstruction(output, request)
     _check_concept_preservation(output)
     profile = request["learner_profile"]
     decision = output["learner_decision"]
@@ -129,10 +195,10 @@ def normalize_output(raw: ReconstructionOutput, request: dict) -> dict:
     if not profile["native_language"]:
         decision["methods_selected"] = [m for m in decision["methods_selected"] if m != "bilingual"]
     output["document"] = {"subject": request["subject"], "source_name": request["source_name"],
-                          "grade": profile["grade"] or "", "class_name": ""}
+                          "grade": profile["grade"] or "", "class_name": "", "source_pdf_url": request["source_pdf_url"]}
     output["warnings"] = list(dict.fromkeys(request["profile_notes"] + output["warnings"]))
     lexicon = {entry["term"]: entry for entry in request["vocabulary_lexicon"]["entries"]}
-    simplify_sentences = set()
+    simplify_sentences = reference_simplifications
     by_id = {s["id"]: s for s in output["key_sentences"]}
     for term in output["vocabulary"]:
         entry = lexicon.get(term["term"], {})
@@ -169,14 +235,12 @@ def normalize_output(raw: ReconstructionOutput, request: dict) -> dict:
     if any(t["tier"] == "unknown_needs_teacher" for t in output["vocabulary"]):
         output["warnings"].append("사전에 분류 근거가 없는 어휘는 ‘교사 분류 필요’로 표시했습니다. 임의의 숙달 단계는 부여하지 않았습니다.")
     # A text-only provider cannot claim to have inspected PDF pages or performed OCR.
-    for sentence in output["key_sentences"]:
-        sentence["page"] = None
     if output["recognition"]["status"] == "failed":
         raise ValueError("원문 확인에 실패한 재구성 결과는 저장할 수 없습니다.")
-    output["recognition"]["page_notes"] = ["교사가 확인한 추출 텍스트를 사용했습니다. PDF 페이지·OCR 품질은 모델이 검사하지 않았습니다."]
+    output["recognition"]["page_notes"] = ["첨부 예시의 블록·쪽 연결을 사용했습니다. 일반 PDF 지면 재배치를 수행하지 않습니다." if request.get("reference_example") else "교사가 확인한 추출 텍스트를 사용했습니다. PDF 페이지·OCR 품질은 모델이 검사하지 않았습니다."]
     output["learner_tools"] = {"tts_texts": [v["term"] for v in output["vocabulary"]],
         "vocabulary_states": {v["term"]: v["knowledge_state"] for v in output["vocabulary"]},
-        "visual_visibility_default": True, "document_zoom_default_percent": 100, "handwriting_supported_by_host": False}
+        "visual_visibility_default": False, "document_zoom_default_percent": 100, "handwriting_supported_by_host": False}
     _check_concept_preservation(output)
     _set_review_state(output, False, False)
     output["profile_context"] = {"source": request["profile_source"], "level_scale": profile["level_scale"],
@@ -196,11 +260,20 @@ def render_variant(output: dict, source: str, student: dict, provider: str) -> d
     terms = [dict(term=v["term"], meaning=v["simple_meaning"], translation=v["translation"],
                   translations={language: v["translation"]} if language else {}, verified=confirmed, tts_text=v["tts_text"])
              for v in output["vocabulary"]]
-    visuals = [dict(term=v["title"], meaning=v["description"], kind=v["kind"], items=v["items"], alt_text=v["alt_text"])
-               for v in output["visual_aids"] if v["needed"] and v["visible_by_default"]]
+    visuals = [dict(term=v["title"], meaning=v["description"], kind=v["kind"], items=v["items"], alt_text=v["alt_text"], visible_by_default=v["visible_by_default"])
+               for v in output["visual_aids"] if v["needed"]]
+    by_id = {s["id"]: s for s in output["key_sentences"]}
+    reading_support = []
+    for context in source_contexts(source):
+        sentence = by_id.get(context["id"])
+        reading_support.append({"id": context["id"], "source": context["source"], "rewritten": sentence["rewritten"] if sentence else context["source"],
+            "swaps": sentence.get("swaps", []) if sentence else [], "explanation": sentence.get("explanation", "") if sentence else "",
+            "page": context.get("page"), "activity": context.get("activity", False)})
     return {"text": text, "terms": terms, "visuals": visuals, "level": student["levels"]["reading"],
+        "reading_support": reading_support, "source_pdf_url": output["document"].get("source_pdf_url"),
         "language": student["language"], "native_language": language or "모국어 미등록", "provider": provider,
         "notice": "Solar가 생성한 교사용 L1 재구성 초안입니다. 문장 근거·어휘 분류·번역·시각 자료를 확인해 주세요." if provider == "solar"
+                  else "첨부 민사 재판 예시의 규칙 기반 재구성입니다. 표현·설명·번역은 교사 검토 전입니다." if civil_trial.matches(source)
                   else "L1 검토 흐름을 위한 규칙 기반 데모입니다. 원문을 유지하며 실제 AI 재구성은 수행하지 않았습니다.",
         "reconstruction": output}
 
@@ -213,18 +286,39 @@ def demo_output(request: dict) -> ReconstructionOutput:
     language_labels = {**LANGUAGES, **REFERENCE_GLOSSARY["languages"]}
     code = next((code for code, label in language_labels.items() if label == language), None)
     glossary = GLOSSARY + [{"term": e["term"], "meaning": "", "translations": e["translations"]} for e in REFERENCE_GLOSSARY["entries"]]
+    example = request.get("reference_example", False)
+    if example:
+        glossary = civil_trial.terms(REFERENCE_GLOSSARY)
     vocabulary = [dict(term=t["term"], tier="unknown_needs_teacher", category="unknown",
         source_sentence_ids=[s["id"] for s in sources if t["term"] in s["source"]], action="review",
         simple_meaning=t["meaning"], native_language=language or "", translation=t["translations"].get(code, ""),
         translation_status="review", tts_text=t["term"])
         for t in glossary if t["term"] in request["source_text"]]
+    sentences = []
+    explained_blocks = set()
+    for s in sources:
+        swaps = civil_trial.candidate_swaps(s, request["learner_profile"]) if example else []
+        explanation = civil_trial.explanation(s, request["learner_profile"]) if example and s["block_id"] not in explained_blocks else ""
+        if example:
+            explained_blocks.add(s["block_id"])
+        sentence = dict(id=s["id"], source=s["source"], rewritten=s["source"], swaps=swaps,
+            explanation=explanation, operations=["simplify"] if swaps else ["retain"],
+            rationale="첨부 예시의 표현 후보를 교사가 검토합니다. 진단 척도가 다른 기록은 교체 근거로 쓰지 않습니다." if example else "데모에서는 모델 재구성을 수행하지 않아 원문을 유지합니다.")
+        sentences.append(sentence)
+    methods = (["bilingual"] if language else []) + (["easy", "visual"] if example else [])
+    visuals = []
+    if example:
+        refs = [s["id"] for s in sources if s["block_id"].startswith("st")]
+        visuals = [{"needed": True, "kind": "sequence", "title": "민사 재판의 과정", "description": "원문의 다섯 과정 카드를 순서대로 확인해요.",
+            "items": [s["source"] for s in sources if s["id"] in refs], "source_sentence_ids": refs, "alt_text": "소장 제출부터 판결까지 민사 재판의 다섯 과정", "visible_by_default": False,
+            "rationale": "첨부 예시의 과정 카드 원문을 그대로 사용합니다."}]
     return ReconstructionOutput.model_validate({
         "status": "teacher_review_required", "document": {"subject": request["subject"]},
-        "learner_decision": {"native_language": language or "", "methods_selected": ["bilingual"] if language else [],
-            "rationale": ["데모는 원문을 유지하고 내장 예시 교과어만 제공합니다. Solar를 설정하면 프로필과 원문에 따른 자동 판단을 수행합니다."]},
+        "learner_decision": {"native_language": language or "", "methods_selected": methods,
+            "rationale": ["첨부 예시의 표현 후보·접힌 설명·과정 카드를 사용합니다. 1~6 읽기 진단이 없으면 표현은 유지합니다." if example else "데모는 원문을 유지하고 내장 예시 교과어만 제공합니다. Solar를 설정하면 프로필과 원문에 따른 자동 판단을 수행합니다."]},
         "recognition": {"status": "success", "page_notes": [], "uncertain_spans": []},
-        "key_sentences": [dict(s, rewritten=s["source"], operations=["retain"], rationale="데모에서는 모델 재구성을 수행하지 않아 원문을 유지합니다.") for s in sources],
-        "vocabulary": vocabulary, "visual_aids": [], "teacher_review": {"questions": ["선택한 학생의 모국어와 프로필을 확인했나요?"]},
+        "key_sentences": sentences,
+        "vocabulary": vocabulary, "visual_aids": visuals, "teacher_review": {"questions": ["선택한 학생의 모국어와 프로필을 확인했나요?", "원문과 교과 개념어가 보존되며 활동의 정답을 미리 드러내지 않나요?"]},
         "finalization": {}, "warnings": ["규칙 기반 데모이며 생성·분류·번역 품질 검증이 아닙니다."],
     })
 
@@ -239,8 +333,18 @@ def apply_teacher_edits(variant: dict, source: str, edits: ReconstructionEdits, 
         raise ValueError("기존 시각 자료를 모두 포함해 수정해 주세요.")
     by_id = {s.id: s for s in edits.sentences}
     by_term = {t.term: t for t in edits.vocabulary}
+    contexts = {s["id"]: s for s in source_contexts(source)}
     for sentence in output["key_sentences"]:
-        sentence["rewritten"] = by_id[sentence["id"]].rewritten
+        edit = by_id[sentence["id"]]
+        if sentence.get("fixed") and edit.rewritten != sentence["source"]:
+            raise ValueError("법 조문·인용·출처는 원문을 유지해 주세요.")
+        if sentence["rewritten"] != edit.rewritten:
+            sentence["swaps"] = []  # Stale model anchors must not survive a teacher rewrite.
+        sentence["rewritten"] = edit.rewritten
+        if edit.explanation is not None:
+            sentence["explanation"] = edit.explanation
+        if contexts[sentence["id"]].get("activity"):
+            sentence["explanation"] = ""
     for term in output["vocabulary"]:
         term.update(by_term[term["term"]].model_dump())
         if term["translation"] and not output["learner_decision"]["native_language"]:
@@ -249,6 +353,10 @@ def apply_teacher_edits(variant: dict, source: str, edits: ReconstructionEdits, 
         visual.update(edit.model_dump())
     # Validate edited content while keeping source links, diagnosis and approval server-owned.
     ReconstructionOutput.model_validate({k: v for k, v in output.items() if k != "profile_context"})
+    if civil_trial.matches(source):
+        for sentence in output["key_sentences"]:
+            if any(sentence["rewritten"].count(term) < sentence["source"].count(term) for term in civil_trial.PROTECTED):
+                raise ValueError("민사 재판의 교과 개념어를 유지해 주세요.")
     _check_concept_preservation(output)
     _set_review_state(output, confirmed, True)
     student = {"levels": {"reading": variant["level"]}, "language": variant["language"]}
