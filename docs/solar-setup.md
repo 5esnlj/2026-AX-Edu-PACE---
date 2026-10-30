@@ -10,7 +10,8 @@ VS Code에서 `package.json`이 있는 프로젝트 폴더를 열고 **터미널
 
 ```powershell
 git fetch origin
-git switch feature/ganada-brand-reconstruction
+git switch feature/six-level-learning-path
+git pull --ff-only origin feature/six-level-learning-path
 ```
 
 로컬 수정 때문에 전환할 수 없다고 나오면 멈추고 메시지를 확인하세요. `reset --hard`로 덮어쓰지 마세요. 이 브랜치에는 기존 앱과 Solar 변경이 함께 들어 있습니다. GitHub `main`에 병합되기 전까지는 이 브랜치를 선택해 실행합니다.
@@ -96,3 +97,9 @@ npm.cmd run build
 - `npm test`는 모의 Solar 응답과 임시 DB를 사용하며 실제 키나 API 비용 없이 검증합니다. 브라우저 테스트는 강제로 demo 모드를 사용합니다.
 
 실제 키를 사용한 Solar 호출 성공·번역 품질은 검증하지 않았습니다. 이 클라우드의 허용 도메인에는 `api.upstage.ai`가 포함되어 있지 않습니다. 위 4단계가 사용자 PC에서의 실제 연결 확인 절차입니다.
+
+## 맞춤 자료 만들기에서 연결 상태 확인
+
+화면 상단의 **Solar 연결 상태**는 앱 서버가 사용하는 모드·키 입력 여부·모델을 표시합니다. **Solar 실제 연결 확인**은 교사만 실행할 수 있으며, 수업 자료 없이 짧은 JSON 응답을 요청합니다(최대 출력 64토큰, 제한 시간 20초, 자동 재시도 없음). 소량의 호출 비용이 발생할 수 있습니다. 인증 실패·잔액/한도·모델 설정·접속 실패를 화면에 표시하며, 성공 표시는 확인 시점의 해당 모델 호출 성공입니다. 대량 자료 재구성 품질이나 이후 호출 성공을 보장하는 표시는 아닙니다.
+
+클라우드의 .env는 PC로 복사되지 않습니다. PC에서 현재 ‘데모’ 안내가 나오면 해당 PC의 .env를 설정하고 서버를 재시작하세요. /api/health 주소 자체에 접속할 수 없으면 먼저 앱 실행 터미널의 Local 주소와 API 오류를 확인합니다. 열어 둔 화면은 서버 종료 후에도 남아 있을 수 있습니다.

@@ -29,6 +29,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { api, useResource, useAgentHealth } from "../api";
+import { SolarConnection } from "./SolarConnection";
 import { TeacherL1Review } from "./TeacherL1";
 import {
   CIVIL_TRIAL_TITLE,
@@ -292,6 +293,7 @@ export function CreateMaterial() {
         title="맞춤 수업 자료 만들기"
         description="원본의 핵심 개념은 지키고, 한국어의 문턱은 낮춰요."
       />
+      <SolarConnection />
       <Stepper step={step} />
       <div className="editor-layout">
         <div>

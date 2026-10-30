@@ -39,6 +39,10 @@ class VisualOutput(OutputModel):
     meaning: Text
 
 
+class ConnectionOutput(OutputModel):
+    reply: Literal["ok"]
+
+
 class MaterialOutput(OutputModel):
     text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=10, max_length=40000)]
     terms: list[TermOutput] = Field(max_length=20)
@@ -95,7 +99,7 @@ class SolarLearningAgent:
     def configured(self) -> bool:
         return bool(self._api_key)
 
-    def _generate(self, instruction: str, data: dict, schema: type[GeneratedOutput]) -> GeneratedOutput:
+    def _generate(self, instruction: str, data: dict, schema: type[GeneratedOutput], *, max_tokens: int = 8000, timeout: float = 90.0) -> GeneratedOutput:
         if not self.configured:
             raise SolarAgentError("Solar API 키가 없습니다. 프로젝트 .env에 UPSTAGE_API_KEY를 입력하고 서버를 다시 실행해 주세요.", 503)
         system = (
@@ -108,7 +112,7 @@ class SolarLearningAgent:
         )
         try:
             # No automatic retry: a repeated completion may incur another charge.
-            with httpx.Client(timeout=httpx.Timeout(90.0, connect=10.0), transport=self._transport) as client:
+            with httpx.Client(timeout=httpx.Timeout(timeout, connect=10.0), transport=self._transport) as client:
                 response = client.post(self.endpoint, headers={"Authorization": f"Bearer {self._api_key}"}, json={
                     "model": self.model,
                     "messages": [
@@ -116,7 +120,7 @@ class SolarLearningAgent:
                         {"role": "user", "content": json.dumps(data, ensure_ascii=False)},
                     ],
                     "temperature": 0.2,
-                    "max_tokens": 8000,
+                    "max_tokens": max_tokens,
                     "response_format": {"type": "json_object"},
                     "stream": False,
                 })
@@ -141,6 +145,14 @@ class SolarLearningAgent:
         except (ValueError, KeyError, IndexError, TypeError, AttributeError, ValidationError):
             # Do not expose upstream bodies, lesson content, credentials or validation input.
             raise SolarAgentError("Solar 응답이 필요한 자료 형식과 맞지 않아 저장하지 않았습니다. 원문을 줄이거나 다시 시도해 주세요.") from None
+
+    def check_connection(self) -> dict:
+        self._generate(
+            '연결 확인 요청입니다. {"reply":"ok"}만 반환하세요.',
+            {"purpose": "connection_check"}, ConnectionOutput,
+            max_tokens=64, timeout=20.0,
+        )
+        return {"connected": True, "model": self.model}
 
     def reconstruct(self, source: str, level: int, language: str, modes: list[str]) -> dict:
         if language not in LANGUAGES or level not in (0, 1, 2, 3, 4, 5, 6):

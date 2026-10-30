@@ -165,6 +165,15 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
             db.execute("SELECT 1").fetchone()
         return {"status": "ok", "provider": getattr(agent, "provider", "custom"), "configured": getattr(agent, "configured", True), "model": getattr(agent, "model", None), "demo_enabled": demo_enabled}
 
+    @app.post("/api/agent/check")
+    def check_agent(_=Depends(teacher)):
+        if getattr(agent, "provider", "demo") != "solar":
+            raise HTTPException(409, "현재 규칙 기반 데모 모드입니다. 프로젝트 .env에서 IEUM_AGENT_PROVIDER=solar로 설정하고 서버를 다시 실행해 주세요.")
+        try:
+            return {**agent.check_connection(), "checked_at": now()}
+        except SolarAgentError as error:
+            raise HTTPException(error.status_code, str(error)) from None
+
     @app.get("/api/demo")
     def demo():
         if not demo_enabled:
