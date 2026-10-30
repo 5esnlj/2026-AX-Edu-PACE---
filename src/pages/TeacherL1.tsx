@@ -99,16 +99,54 @@ export function TeacherL1Review({
       {data.key_sentences.map((sentence, index) => (
         <section className="l1-card" key={sentence.id}>
           <strong>{sentence.id} · 원문</strong>
+          {sentence.fixed && <Badge tone="neutral">원문 고정</Badge>}
           <p className="l1-source">{sentence.source}</p>
           <p className="muted">
             초안의 처리·근거:{" "}
             {sentence.operations.map((op) => l1Actions[op]).join(" · ")} —{" "}
             {sentence.rationale}
           </p>
+          {!!sentence.swaps?.length && (
+            <div className="phrase-review">
+              <strong>초안에서 바뀐 표현</strong>
+              <ul>
+                {sentence.swaps.map((swap, i) => (
+                  <li key={i}>
+                    <span className="swap-before">{swap.original}</span> →{" "}
+                    <span className="swap-after">{swap.replacement}</span>
+                  </li>
+                ))}
+              </ul>
+              <small>
+                직접 수정한 문장은 저장 후 학생용 미리보기에서 확인해 주세요.
+              </small>
+            </div>
+          )}
+          {sentence.explanation && (
+            <details className="reading-explanation">
+              <summary>학생에게 제공할 쉬운 설명</summary>
+              <label className="field">
+                <span>{sentence.id} 쉬운 설명 수정</span>
+                <textarea
+                  readOnly={readOnly}
+                  maxLength={4000}
+                  value={edits.sentences[index].explanation || ""}
+                  onChange={(e) =>
+                    onChange({
+                      ...edits,
+                      sentences: edits.sentences.map((s, i) =>
+                        i === index ? { ...s, explanation: e.target.value } : s,
+                      ),
+                    })
+                  }
+                />
+              </label>
+            </details>
+          )}
           <label className="field">
             <span>{sentence.id} 재구성 문장 수정</span>
             <textarea
-              readOnly={readOnly}
+              readOnly={readOnly || sentence.fixed}
               maxLength={4000}
               value={edits.sentences[index].rewritten}
               onChange={(e) =>
@@ -121,6 +159,26 @@ export function TeacherL1Review({
               }
             />
           </label>
+          {!readOnly && !sentence.fixed && (
+            <div className="phrase-review-actions">
+              <small>수정 후 저장하면 기존 검토 완료가 해제됩니다.</small>
+              <button
+                type="button"
+                className="text-link"
+                disabled={edits.sentences[index].rewritten === sentence.source}
+                onClick={() =>
+                  onChange({
+                    ...edits,
+                    sentences: edits.sentences.map((s, i) =>
+                      i === index ? { ...s, rewritten: sentence.source } : s,
+                    ),
+                  })
+                }
+              >
+                {sentence.id} 원문으로 되돌리기
+              </button>
+            </div>
+          )}
         </section>
       ))}
       <h3>어휘 위계와 번역 검토</h3>

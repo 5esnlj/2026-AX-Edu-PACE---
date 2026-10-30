@@ -10,7 +10,7 @@
 
 ```powershell
 git fetch origin
-git switch feature/teacher-l2-translation-review
+git switch feature/ganada-brand-reconstruction
 .\.venv\Scripts\python.exe -m pip install -r .\backend\requirements.txt
 npm.cmd install
 npm.cmd run dev

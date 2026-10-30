@@ -1,6 +1,6 @@
 # Windows · VS Code에서 Solar 연결하기
 
-Solar 연결은 브라우저 → 이음 Python 서버 → Upstage API 순서로 작동합니다. API 키는 Python 서버의 `.env`에서만 읽습니다. 화면 코드나 `VITE_` 변수에 키를 넣지 마세요.
+Solar 연결은 브라우저 → 가나다계단 Python 서버 → Upstage API 순서로 작동합니다. API 키는 Python 서버의 `.env`에서만 읽습니다. 화면 코드나 `VITE_` 변수에 키를 넣지 마세요.
 
 ## 1. 수정된 코드 받기
 
@@ -10,7 +10,7 @@ VS Code에서 `package.json`이 있는 프로젝트 폴더를 열고 **터미널
 
 ```powershell
 git fetch origin
-git switch feature/teacher-l2-translation-review
+git switch feature/ganada-brand-reconstruction
 ```
 
 로컬 수정 때문에 전환할 수 없다고 나오면 멈추고 메시지를 확인하세요. `reset --hard`로 덮어쓰지 마세요. 이 브랜치에는 기존 앱과 Solar 변경이 함께 들어 있습니다. GitHub `main`에 병합되기 전까지는 이 브랜치를 선택해 실행합니다.

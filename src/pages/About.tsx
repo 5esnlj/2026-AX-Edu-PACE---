@@ -12,7 +12,7 @@ export function About() {
     <>
       <PageHeading
         eyebrow="다름을 잇고, 배움을 넓히다"
-        title="이음이 만드는 교실"
+        title="가나다계단이 만드는 교실"
         description="함께 배울 수 있도록, 한국어와 교과 지식 사이에 디딤돌을 놓습니다."
       />
       <section className="about-hero">
@@ -25,7 +25,7 @@ export function About() {
         <p>
           일상의 한국어와 학습의 한국어는 다를 수 있어요.
           <br />
-          이음은 교사가 학생의 학습을 세심하게 이해하고,
+          가나다계단은 교사가 학생의 학습을 세심하게 이해하고,
           <br />
           학생에게 맞는 배움의 길을 함께 찾도록 돕습니다.
         </p>

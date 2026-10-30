@@ -89,9 +89,9 @@ function Welcome() {
         <div className="welcome-story">
           <span className="eyebrow">다른 언어에서, 같은 배움으로</span>
           <h1>
-            배움과 배움 사이,
+            저마다의 속도로,
             <br />
-            <span>우리의 이음.</span>
+            <span>함께 오르는 배움.</span>
           </h1>
           <p>
             한국어가 아직 낯설어도, 배움은 이어지도록.
@@ -115,9 +115,9 @@ function Welcome() {
           </div>
         </div>
         <section className="entry-card">
-          <span className="eyebrow">반가워요, 이음입니다</span>
+          <span className="eyebrow">반가워요, 가나다계단입니다</span>
           <h2>어떤 교실로 들어갈까요?</h2>
-          <p>역할을 선택하고 이음을 경험해 보세요.</p>
+          <p>역할을 선택하고 가나다계단을 시작해 보세요.</p>
           <div className="role-options">
             {(
               [
@@ -187,7 +187,7 @@ function Welcome() {
         </section>
       </main>
       <footer>
-        다름을 잇고, 배움을 넓히다. <span>© 이음 · PACE</span>
+        서로 다른 시작, 함께 오르는 배움. <span>© 가나다계단 · PACE</span>
       </footer>
     </div>
   );

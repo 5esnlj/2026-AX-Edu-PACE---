@@ -19,6 +19,7 @@ from .agents import LANGUAGES, SUBJECTS, GLOSSARY, SAMPLE_TEXT, ROADMAP, Learnin
 from .database import connect, dumps, initialize, now
 from .solar_agent import SolarAgentError, SolarLearningAgent
 from .l1.models import LearnerProfile, ReconstructionEdits
+from .l1.civil_trial import example as civil_trial_example
 from .l2.models import AnalyzeInput
 from .l2.workflow import GLOSSARY as L2_GLOSSARY, LANGUAGES as L2_LANGUAGES, prepare_request as prepare_l2, demo_analysis, normalize_output as normalize_l2
 from .l1.workflow import (
@@ -110,7 +111,7 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
         initialize(path)
         yield
 
-    app = FastAPI(title="이음 Learning API", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="가나다계단 Learning API", version="0.1.0", lifespan=lifespan)
     if learning_agent is not None:
         agent = learning_agent
     elif os.getenv("IEUM_AGENT_PROVIDER", "demo").strip().lower() == "solar":
@@ -237,6 +238,10 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
     @app.get("/api/l1/example-profile")
     def example_l1_profile(_=Depends(teacher)):
         return json.loads((L1_ROOT / "data/learners.example.json").read_text(encoding="utf-8"))
+
+    @app.get("/api/l1/civil-trial-example")
+    def get_civil_trial_example(_=Depends(teacher)):
+        return civil_trial_example()
 
     @app.post("/api/diagnostic")
     def diagnostic(data: Diagnostic, auth=Depends(learner)):
