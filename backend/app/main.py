@@ -5,6 +5,8 @@ import secrets
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+from dotenv import load_dotenv
 from typing import Literal
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, Response, UploadFile
@@ -15,8 +17,10 @@ from contextlib import asynccontextmanager
 
 from .agents import LANGUAGES, SUBJECTS, GLOSSARY, SAMPLE_TEXT, ROADMAP, LearningAgent, DemoLearningAgent, assess, public_questions
 from .database import connect, dumps, initialize, now
+from .solar_agent import SolarAgentError, SolarLearningAgent
 
 ROOT = Path(__file__).resolve().parents[2]
+load_dotenv(ROOT / ".env")
 MAX_UPLOAD = 10 * 1024 * 1024
 
 class Login(BaseModel):
@@ -98,10 +102,8 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
     app = FastAPI(title="이음 Learning API", version="0.1.0", lifespan=lifespan)
     if learning_agent is not None:
         agent = learning_agent
-
     elif os.getenv("IEUM_AGENT_PROVIDER", "demo").lower() == "solar":
         agent = SolarLearningAgent()
-
     else:
         agent = DemoLearningAgent()
 
@@ -241,7 +243,17 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
         targets = list(dict.fromkeys(data.targets))
         with connect(path) as db:
             profiles = [find_student(db, sid) for sid in targets]
-            variants = {s["id"]: agent.reconstruct(data.source_text, s["levels"]["reading"], s["language"], data.modes) for s in profiles}
+        # Network calls are made outside the DB transaction.
+        try:
+            variants = {
+                s["id"]: agent.reconstruct(data.source_text, s["levels"]["reading"], s["language"], data.modes)
+                for s in profiles
+            }
+        except SolarAgentError as exc:
+            raise HTTPException(502, str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        with connect(path) as db:
             db.execute("INSERT INTO materials VALUES(?,?,?,?,?,?,?,?,?,?,?)", (mid, data.title, data.subject, data.unit, data.source_text, dumps(data.modes), dumps(targets), dumps(variants), "[]", "draft", now()))
             return find_material(db, mid, auth)
 
@@ -305,11 +317,15 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
             existing = db.execute("SELECT id FROM quizzes WHERE material_id=?", (mid,)).fetchone()
             if existing:
                 return {"id": existing["id"]}
-            try:
-                questions = agent.questions(item["source_text"])
-            except ValueError as error:
-                raise HTTPException(422, str(error))
-            qid = "quiz-" + secrets.token_hex(6)
+        # Do not hold a DB transaction open while requesting the LLM.
+        try:
+            questions = agent.questions(item["source_text"])
+        except SolarAgentError as exc:
+            raise HTTPException(502, str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        qid = "quiz-" + secrets.token_hex(6)
+        with connect(path) as db:
             db.execute("INSERT INTO quizzes VALUES(?,?,?,?)", (qid, mid, dumps(questions), now()))
             return {"id": qid}
 
