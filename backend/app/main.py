@@ -102,10 +102,12 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
     app = FastAPI(title="이음 Learning API", version="0.1.0", lifespan=lifespan)
     if learning_agent is not None:
         agent = learning_agent
-    elif os.getenv("IEUM_AGENT_PROVIDER", "demo").lower() == "solar":
+    elif os.getenv("IEUM_AGENT_PROVIDER", "demo").strip().lower() == "solar":
         agent = SolarLearningAgent()
-    else:
+    elif os.getenv("IEUM_AGENT_PROVIDER", "demo").strip().lower() == "demo":
         agent = DemoLearningAgent()
+    else:
+        raise ValueError("IEUM_AGENT_PROVIDER는 demo 또는 solar로 설정해 주세요.")
 
     @app.middleware("http")
     async def same_origin_mutations(request: Request, call_next):
@@ -155,7 +157,7 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
     def health():
         with connect(path) as db:
             db.execute("SELECT 1").fetchone()
-        return {"status": "ok", "provider": getattr(agent, "provider", "custom"), "demo_enabled": demo_enabled}
+        return {"status": "ok", "provider": getattr(agent, "provider", "custom"), "configured": getattr(agent, "configured", True), "model": getattr(agent, "model", None), "demo_enabled": demo_enabled}
 
     @app.get("/api/demo")
     def demo():
@@ -250,7 +252,7 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
                 for s in profiles
             }
         except SolarAgentError as exc:
-            raise HTTPException(502, str(exc)) from exc
+            raise HTTPException(exc.status_code, str(exc)) from None
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from exc
         with connect(path) as db:
@@ -321,13 +323,14 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
         try:
             questions = agent.questions(item["source_text"])
         except SolarAgentError as exc:
-            raise HTTPException(502, str(exc)) from exc
+            raise HTTPException(exc.status_code, str(exc)) from None
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from exc
         qid = "quiz-" + secrets.token_hex(6)
         with connect(path) as db:
-            db.execute("INSERT INTO quizzes VALUES(?,?,?,?)", (qid, mid, dumps(questions), now()))
-            return {"id": qid}
+            # Concurrent generation requests may finish after another request saved a quiz.
+            db.execute("INSERT INTO quizzes VALUES(?,?,?,?) ON CONFLICT(material_id) DO NOTHING", (qid, mid, dumps(questions), now()))
+            return {"id": db.execute("SELECT id FROM quizzes WHERE material_id=?", (mid,)).fetchone()["id"]}
 
     @app.get("/api/quizzes")
     def quizzes(auth=Depends(session)):

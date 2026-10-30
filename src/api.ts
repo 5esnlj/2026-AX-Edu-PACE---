@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 
+export type AgentHealth = {
+  provider: string;
+  configured: boolean;
+  model: string | null;
+};
+
+export function useAgentHealth() {
+  return useResource<AgentHealth>("/health");
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   if (init?.body && !(init.body instanceof FormData))

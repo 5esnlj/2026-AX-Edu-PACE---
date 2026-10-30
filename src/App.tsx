@@ -29,7 +29,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import { api, useResource } from "./api";
+import { api, useResource, useAgentHealth } from "./api";
 import {
   Avatar,
   Badge,
@@ -212,6 +212,7 @@ const studentNav = [
 
 function Layout() {
   const { user, loading, logout } = useSession();
+  const { data: agent } = useAgentHealth();
   const [mobile, setMobile] = useState(false);
   const location = useLocation();
   const toast = useToast();
@@ -348,7 +349,16 @@ function Layout() {
         <footer className="app-footer">
           <Logo small />
           <span>모든 학생의 배움이 이어지는 곳</span>
-          <span>예시 데이터 · AI 미연결</span>
+          <span>
+            예시 데이터 ·{" "}
+            {agent?.provider === "solar"
+              ? agent.configured
+                ? "Solar 사용 설정"
+                : "Solar 키 설정 필요"
+              : agent
+                ? "규칙 기반 데모"
+                : "AI 설정 확인 중"}
+          </span>
         </footer>
       </div>
     </div>

@@ -8,6 +8,7 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
+    watch: { ignored: ["**/.vs/**", "**/.venv/**", "**/.data/**"] },
     proxy: { "/api": { target: apiTarget, changeOrigin: false } },
   },
   preview: {

@@ -9,6 +9,8 @@ const child = spawn(process.execPath, ["scripts/dev.mjs"], {
   stdio: "inherit",
   env: {
     ...process.env,
+    IEUM_AGENT_PROVIDER: "demo",
+    IEUM_DEMO_ENABLED: "true",
     IEUM_DB_PATH: join(folder, "test.db"),
     IEUM_API_PORT: "8001",
     IEUM_WEB_PORT: "5174",
