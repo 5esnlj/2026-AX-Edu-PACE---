@@ -10,6 +10,8 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, Validation
 from .agents import LANGUAGES
 from .l1.models import ReconstructionOutput
 from .l1.workflow import SYSTEM_PROMPT
+from .l2.models import AnalysisOutput
+from .l2.workflow import SYSTEM_PROMPT as TRANSLATION_REVIEW_PROMPT
 
 Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
 ShortText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=300)]
@@ -187,3 +189,6 @@ class SolarLearningAgent:
             {"source": source}, QuizOutput,
         )
         return [dict(q.model_dump(), id=f"q{i}") for i, q in enumerate(output.questions, 1)]
+
+    def analyze_translation(self, request: dict) -> AnalysisOutput:
+        return self._generate(TRANSLATION_REVIEW_PROMPT, request, AnalysisOutput)

@@ -1,0 +1,148 @@
+.material-tools {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0 0 1.3rem;
+}
+.material-tools a {
+  padding: 0.75rem 1rem;
+  border: 1px solid #dce6e1;
+  border-radius: 10px;
+  color: #416256;
+  background: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
+.material-tools a.active {
+  color: #fff;
+  background: #287861;
+  border-color: #287861;
+}
+.l2-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.3rem;
+  margin: 1.3rem 0;
+  align-items: start;
+}
+.l2-form {
+  border: 0;
+  margin: 1rem 0 0;
+  padding: 0;
+  min-width: 0;
+  display: grid;
+  gap: 1rem;
+}
+.l2-form .field {
+  margin: 0;
+}
+.l2-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+.l2-source {
+  min-height: 290px;
+  resize: vertical;
+}
+.l2-import {
+  border: 1px solid #dde5df;
+  padding: 0.85rem;
+  border-radius: 10px;
+  margin: 0.8rem 0;
+}
+.l2-import[open] summary {
+  margin-bottom: 0.8rem;
+}
+.l2-import .field {
+  margin: 0.8rem 0;
+}
+.l2-results,
+.l2-reference,
+.l2-history {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.l2-results p,
+.l2-reference p,
+.l2-results li {
+  line-height: 1.7;
+}
+.l2-results ul,
+.l2-reference ul {
+  padding-left: 1.2rem;
+}
+.l2-counts {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+.l2-counts span {
+  background: #edf5f0;
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+}
+.l2-counts strong {
+  margin-left: 0.3rem;
+}
+.l2-candidate {
+  border: 1px solid #dce6e1;
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+.l2-candidate-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.l2-candidate blockquote {
+  margin: 0.8rem 0;
+  padding: 0.8rem;
+  background: #f3f6f4;
+  border-left: 3px solid #669383;
+  white-space: pre-wrap;
+}
+.l2-reference,
+.l2-history {
+  margin: 1.3rem 0;
+}
+.l2-table-scroll {
+  overflow-x: auto;
+}
+.l2-reference table {
+  min-width: 680px;
+}
+.l2-history ul {
+  padding: 0;
+  list-style: none;
+}
+.l2-history li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid #e5ebe7;
+  flex-wrap: wrap;
+}
+.l2-history span {
+  color: #61756b;
+  font-size: 0.85rem;
+}
+@media (max-width: 900px) {
+  .l2-layout {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 540px) {
+  .l2-fields {
+    grid-template-columns: 1fr;
+  }
+  .material-tools a {
+    padding: 0.65rem;
+    font-size: 0.85rem;
+  }
+}

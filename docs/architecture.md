@@ -49,6 +49,8 @@ stateDiagram-v2
 
 L1 자료는 `variants[student_id].reconstruction`에 문장별 근거·어휘 위계·시각 자료·지원 판단을 저장합니다. 학생 응답에서는 이 교사용 필드를 제거합니다. 교사의 구조화 수정에서 `text/terms/visuals`를 다시 계산해 기존 읽기 화면과 호환합니다. 모델 응답의 승인 필드는 신뢰하지 않으며, 중간 저장은 검토 완료 상태를 해제합니다. 상세 흐름은 [L1 통합 안내](teacher-l1-integration.md)를 참고하세요.
 
+L2 오역 탐지는 자료 메뉴 안의 독립 검토 흐름입니다. PDF·텍스트 또는 저장된 학생별 자료를 입력받아 Solar가 문맥·근거를 제안하고 서버가 실제 인용·대역 비교·중복 근거·건수를 검사합니다. 교과·단원 근거가 부족하면 결과를 보류하며 교사 선택 후 재실행할 수 있습니다. 검토 당시 본문·설정·결과는 `translation_reviews`에 저장하고 기존 자료 상태는 바꾸지 않습니다. 이미지 대역표는 L1·L2 공통 참고 자료이며 검수 전이므로 자동 확정 근거로 사용하지 않습니다. [L2 통합 안내](teacher-l2-integration.md)에 분류 규칙과 한계를 정리했습니다.
+
 ## 에이전트 교체 지점
 
 `backend/app/agents.py`:
@@ -60,6 +62,8 @@ class LearningAgent(Protocol):
 ```
 
 `IEUM_AGENT_PROVIDER=demo`는 `DemoLearningAgent`, `solar`는 `backend/app/solar_agent.py`의 `SolarLearningAgent`를 선택합니다. `create_app(..., learning_agent=...)`로 모의 어댑터도 주입할 수 있습니다. 루트 `.env`는 Python 서버가 자동 로드하며, API 키는 서버에만 둡니다.
+
+교사용 L1·L2는 각각 `reconstruct_l1(request)`·`analyze_translation(request)`를 통해 같은 Solar 어댑터의 구조화 호출을 사용합니다. 데모 구현은 각 워크플로 모듈에서 처리하며 L2 데모는 명시적인 용어 병기만 비교합니다.
 
 Solar는 원문·읽기 수준·대상 언어·지원 방식으로 구조화 JSON을 요청합니다. 응답 스키마를 검증한 뒤 저장하며, 인증·한도·통신·형식 오류를 한국어 메시지로 변환합니다. HTTP 응답 원문·키·모델 검증 입력은 클라이언트 오류에 노출하지 않습니다. 연결 10초/네트워크 작업 90초의 타임아웃을 적용하며 자동 재시도는 하지 않습니다. 네트워크 요청 중 DB 연결은 열어 두지 않습니다.
 
@@ -91,42 +95,46 @@ PDF는 `pypdf`로 텍스트를 추출합니다. 스캔본은 오류와 직접 �
 
 ## 데이터 모델
 
-| 테이블        | 내용                                                 |
-| ------------- | ---------------------------------------------------- |
-| `students`    | 합성 이름·언어·학년·영역별 단계·생활 단계·기록 출처  |
-| `l1_profiles` | 교사가 학생별로 연결한 별도 L1 진단 프로필·갱신 시각 |
-| `sessions`    | 무작위 토큰·역할·학생 ID·발급 시각(1일 만료)         |
-| `materials`   | 원문·대상·지원 방식·variant·검토·상태                |
-| `quizzes`     | 자료별 문항과 서버 전용 정답·해설                    |
-| `attempts`    | 학생별 응답·참고 신호·예시 여부·시각                 |
-| `learning`    | 학생·자료별 메모·아는/더 배울 단어                   |
-| `progress`    | 학생·활동별 완료 기록                                |
-| `messages`    | 해당 학생과 교사의 내부 대화                         |
-| `invitations` | 코드·발급·만료 시각(가입 미연결)                     |
+| 테이블                | 내용                                                  |
+| --------------------- | ----------------------------------------------------- |
+| `students`            | 합성 이름·언어·학년·영역별 단계·생활 단계·기록 출처   |
+| `l1_profiles`         | 교사가 학생별로 연결한 별도 L1 진단 프로필·갱신 시각  |
+| `sessions`            | 무작위 토큰·역할·학생 ID·발급 시각(1일 만료)          |
+| `materials`           | 원문·대상·지원 방식·variant·검토·상태                 |
+| `translation_reviews` | 교사 전용 검토 당시 본문·설정·결과·선택적 원자료 연결 |
+| `quizzes`             | 자료별 문항과 서버 전용 정답·해설                     |
+| `attempts`            | 학생별 응답·참고 신호·예시 여부·시각                  |
+| `learning`            | 학생·자료별 메모·아는/더 배울 단어                    |
+| `progress`            | 학생·활동별 완료 기록                                 |
+| `messages`            | 해당 학생과 교사의 내부 대화                          |
+| `invitations`         | 코드·발급·만료 시각(가입 미연결)                      |
 
 외래 키·SQL 매개변수 바인딩을 사용합니다. 테스트는 임시 DB와 별도 포트를 사용합니다.
 
 ## API 경계
 
-| 경로                                                        | 접근·기능                  |
-| ----------------------------------------------------------- | -------------------------- |
-| `GET /api/health`, `GET /api/demo`                          | 상태·공개 합성 예시 목록   |
-| `POST /api/demo/session`, `GET/DELETE /api/session`         | 데모 입장·세션·퇴장        |
-| `GET /api/students`, `POST /api/invitations`                | 교사 학생 목록·초대 코드   |
-| `GET/PUT/DELETE /api/students/{sid}/reconstruction-profile` | 교사 전용 L1 프로필        |
-| `GET /api/l1/example-profile`                               | 교사 전용 첨부 예시 프로필 |
-| `POST /api/diagnostic`                                      | 학생 자가 점검             |
-| `POST /api/extract`, `POST /api/materials`                  | 교사 입력·생성             |
-| `GET /api/materials`, `GET /api/materials/{id}`             | 역할·수신자별 조회         |
-| `PATCH /api/materials/{id}/review`, `POST .../publish`      | 교사 검토·배포             |
-| `GET /api/glossary`, `POST /api/glossary/check`             | 대역표·교사 후보 비교      |
-| `POST /api/materials/{id}/quiz`                             | 교사 문항 생성             |
-| `GET /api/quizzes`, `GET /api/quizzes/{id}`                 | 수신 문항 조회             |
-| `POST /api/quizzes/{id}/submit`                             | 학생 제출·채점             |
-| `GET /api/reports`                                          | 교사 응답 근거·진행 현황   |
-| `GET/PUT /api/learning/{id}`                                | 학생 단어장·메모           |
-| `GET /api/roadmap`, `POST /api/roadmap/{id}/complete`       | 추천·활동 확인             |
-| `GET/POST /api/messages`                                    | 해당 학생 대화             |
+| 경로                                                        | 접근·기능                         |
+| ----------------------------------------------------------- | --------------------------------- |
+| `GET /api/health`, `GET /api/demo`                          | 상태·공개 합성 예시 목록          |
+| `POST /api/demo/session`, `GET/DELETE /api/session`         | 데모 입장·세션·퇴장               |
+| `GET /api/students`, `POST /api/invitations`                | 교사 학생 목록·초대 코드          |
+| `GET/PUT/DELETE /api/students/{sid}/reconstruction-profile` | 교사 전용 L1 프로필               |
+| `GET /api/l1/example-profile`                               | 교사 전용 첨부 예시 프로필        |
+| `POST /api/diagnostic`                                      | 학생 자가 점검                    |
+| `POST /api/extract`, `POST /api/materials`                  | 교사 입력·생성                    |
+| `GET /api/materials`, `GET /api/materials/{id}`             | 역할·수신자별 조회                |
+| `PATCH /api/materials/{id}/review`, `POST .../publish`      | 교사 검토·배포                    |
+| `GET /api/glossary`, `POST /api/glossary/check`             | 대역표·교사 후보 비교             |
+| `GET /api/translation-review/glossary`                      | 교사 전용 이미지 대역표·지원 언어 |
+| `POST/GET /api/translation-reviews`                         | 교사 L2 분석·검토 이력 목록       |
+| `GET /api/translation-reviews/{id}`                         | 교사 검토 당시 입력·결과 조회     |
+| `POST /api/materials/{id}/quiz`                             | 교사 문항 생성                    |
+| `GET /api/quizzes`, `GET /api/quizzes/{id}`                 | 수신 문항 조회                    |
+| `POST /api/quizzes/{id}/submit`                             | 학생 제출·채점                    |
+| `GET /api/reports`                                          | 교사 응답 근거·진행 현황          |
+| `GET/PUT /api/learning/{id}`                                | 학생 단어장·메모                  |
+| `GET /api/roadmap`, `POST /api/roadmap/{id}/complete`       | 추천·활동 확인                    |
+| `GET/POST /api/messages`                                    | 해당 학생 대화                    |
 
 요청·응답 스키마는 API 서버의 `/docs`에서 확인합니다.
 

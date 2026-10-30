@@ -19,6 +19,8 @@ from .agents import LANGUAGES, SUBJECTS, GLOSSARY, SAMPLE_TEXT, ROADMAP, Learnin
 from .database import connect, dumps, initialize, now
 from .solar_agent import SolarAgentError, SolarLearningAgent
 from .l1.models import LearnerProfile, ReconstructionEdits
+from .l2.models import AnalyzeInput
+from .l2.workflow import GLOSSARY as L2_GLOSSARY, LANGUAGES as L2_LANGUAGES, prepare_request as prepare_l2, demo_analysis, normalize_output as normalize_l2
 from .l1.workflow import (
     ROOT as L1_ROOT, fallback_profile, prepare_request, normalize_output, render_variant,
     demo_output, apply_teacher_edits,
@@ -256,7 +258,7 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
             return find_material(db, mid, auth)
 
     @app.post("/api/extract")
-    async def extract(file: UploadFile = File(...), _=Depends(teacher)):
+    async def extract(file: UploadFile = File(...), include_page_markers: bool = False, _=Depends(teacher)):
         raw = await file.read(MAX_UPLOAD + 1)
         if len(raw) > MAX_UPLOAD:
             raise HTTPException(413, "10MB 이하의 PDF를 올려 주세요.")
@@ -266,16 +268,61 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
             pdf = PdfReader(io.BytesIO(raw))
             if pdf.is_encrypted or len(pdf.pages) > 50:
                 raise HTTPException(422, "암호가 없고 50쪽 이하인 PDF를 사용해 주세요.")
-            text = "\n".join(page.extract_text() or "" for page in pdf.pages).strip()
+            page_texts = [page.extract_text() or "" for page in pdf.pages]
+            text = "\n".join(f"[쪽 {i + 1}]\n{value}" if include_page_markers and value.strip() else value for i, value in enumerate(page_texts)).strip()
         except HTTPException:
             raise
         except Exception:
             raise HTTPException(422, "PDF를 읽지 못했습니다. 텍스트를 직접 붙여 넣어 주세요.")
-        if len(text) < 20:
+        if sum(len(value.strip()) for value in page_texts) < 20:
             raise HTTPException(422, "추출할 텍스트가 없습니다. 스캔본 OCR은 아직 연결되지 않았습니다. 텍스트를 붙여 넣어 주세요.")
         if len(text) > 40000:
             raise HTTPException(422, "추출 텍스트가 너무 깁니다. 40,000자 이하로 나누어 올려 주세요.")
         return {"text": text, "pages": len(pdf.pages), "filename": file.filename}
+
+    @app.get("/api/translation-review/glossary")
+    def translation_glossary(_=Depends(teacher)):
+        return {**L2_GLOSSARY, "analysis_languages": L2_LANGUAGES}
+
+    @app.post("/api/translation-reviews", status_code=201)
+    def analyze_translation(data: AnalyzeInput, auth=Depends(teacher)):
+        if data.material_id:
+            with connect(path) as db:
+                find_material(db, data.material_id, auth)
+        try:
+            request = prepare_l2(data)
+            if getattr(agent, "provider", "") == "demo":
+                output = demo_analysis(data, request)
+            elif callable(getattr(agent, "analyze_translation", None)):
+                output = agent.analyze_translation(request)
+            else:
+                raise HTTPException(503, "현재 에이전트가 오역 탐지를 지원하지 않습니다.")
+            result = normalize_l2(output, data, request, agent.provider)
+        except SolarAgentError as exc:
+            raise HTTPException(exc.status_code, str(exc)) from None
+        except ValueError:
+            raise HTTPException(422, "분석 입력과 결과 형식을 확인해 주세요. 본문은 40,000자·500문단 이하로 나누어 입력해 주세요.") from None
+        rid, created = "review-" + secrets.token_hex(6), now()
+        parameters = data.model_dump(exclude={"document_text", "title", "material_id"})
+        with connect(path) as db:
+            db.execute("INSERT INTO translation_reviews VALUES(?,?,?,?,?,?,?)", (rid, data.title, data.material_id, data.document_text, dumps(parameters), dumps(result), created))
+        return {"id": rid, "title": data.title, "material_id": data.material_id, "document_text": data.document_text,
+                "parameters": parameters, "result": result, "created_at": created}
+
+    @app.get("/api/translation-reviews")
+    def list_translation_reviews(_=Depends(teacher)):
+        with connect(path) as db:
+            rows = db.execute("SELECT id,title,material_id,result,created_at FROM translation_reviews ORDER BY created_at DESC LIMIT 100").fetchall()
+        return [{"id": r["id"], "title": r["title"], "material_id": r["material_id"], "created_at": r["created_at"],
+                 "counts": json.loads(r["result"])["counts"], "needs_selection": json.loads(r["result"])["needs_selection"]} for r in rows]
+
+    @app.get("/api/translation-reviews/{rid}")
+    def get_translation_review(rid: str, _=Depends(teacher)):
+        with connect(path) as db:
+            row = db.execute("SELECT * FROM translation_reviews WHERE id=?", (rid,)).fetchone()
+        if not row:
+            raise HTTPException(404, "오역 검토 기록을 찾을 수 없습니다.")
+        return {**dict(row), "parameters": json.loads(row["parameters"]), "result": json.loads(row["result"])}
 
     @app.post("/api/materials", status_code=201)
     def create_material(data: MaterialInput, auth=Depends(teacher)):

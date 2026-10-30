@@ -25,6 +25,7 @@ import { useEffect, useState, type DragEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, useResource, useAgentHealth } from "../api";
 import { TeacherL1Review } from "./TeacherL1";
+import { MaterialTools } from "./MaterialTools";
 import { toL1Edits, type L1Edits } from "../l1";
 import {
   Avatar,
@@ -57,6 +58,7 @@ export function Materials() {
   if (error) return <ErrorState message={error} retry={reload} />;
   return (
     <>
+      {teacher && <MaterialTools />}
       <PageHeading
         eyebrow="배움을 잇는 자료실"
         title={teacher ? "우리 반 수업 자료" : "나의 수업 자료"}
@@ -244,6 +246,7 @@ export function CreateMaterial() {
   if (!students) return <Loading />;
   return (
     <>
+      <MaterialTools />
       <Link to="/app/materials" className="back-link">
         <ArrowLeft size={16} />
         수업 자료로 돌아가기
@@ -730,6 +733,14 @@ function ReviewMaterial({
         }
       />
       {!published && <Stepper step={3} />}
+      <p>
+        <Link
+          className="text-link"
+          to={`/app/materials/translation-review?material=${item.id}`}
+        >
+          이 자료의 오역 탐지 (L2) 열기
+        </Link>
+      </p>
       <div className="review-controls">
         <div className="variant-tabs" aria-label="학생별 자료 선택">
           {item.targets.map((id) => {

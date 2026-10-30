@@ -49,6 +49,10 @@ def initialize(path: str):
         CREATE TABLE IF NOT EXISTS quizzes (
           id TEXT PRIMARY KEY, material_id TEXT NOT NULL UNIQUE REFERENCES materials(id), questions TEXT NOT NULL, created_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS translation_reviews (
+          id TEXT PRIMARY KEY, title TEXT NOT NULL, material_id TEXT REFERENCES materials(id),
+          document_text TEXT NOT NULL, parameters TEXT NOT NULL, result TEXT NOT NULL, created_at TEXT NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS attempts (
           id INTEGER PRIMARY KEY AUTOINCREMENT, quiz_id TEXT NOT NULL REFERENCES quizzes(id),
           student_id TEXT NOT NULL REFERENCES students(id), result TEXT NOT NULL,
