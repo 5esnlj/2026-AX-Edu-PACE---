@@ -114,8 +114,21 @@ def initialize(path: str):
           id TEXT PRIMARY KEY, student_id TEXT NOT NULL REFERENCES students(id), fingerprint TEXT NOT NULL,
           result TEXT NOT NULL, progress TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS student_materials (
+          id TEXT PRIMARY KEY, student_id TEXT NOT NULL REFERENCES students(id),
+          title TEXT NOT NULL, subject TEXT NOT NULL, source_text TEXT NOT NULL,
+          profile TEXT NOT NULL, fingerprint TEXT NOT NULL, result TEXT NOT NULL,
+          completed_at TEXT, quiz TEXT, attempt TEXT, created_at TEXT NOT NULL,
+          unit TEXT NOT NULL DEFAULT ''
+        );
         """)
+        # Preserve existing student-created lessons when adding optional unit metadata.
+        student_material_columns = {row["name"] for row in db.execute("PRAGMA table_info(student_materials)")}
+        if "unit" not in student_material_columns:
+            db.execute("ALTER TABLE student_materials ADD COLUMN unit TEXT NOT NULL DEFAULT ''")
+        from .diagnosis.seed_example import seed_student_example
         if db.execute("SELECT count(*) FROM students").fetchone()[0]:
+            seed_student_example(db)
             return
         identities = [("std-1", "누리", "vi"), ("std-2", "티무르", "uz"),
                       ("std-3", "사라", "en"), ("std-4", "나란", "mn"),
@@ -134,3 +147,4 @@ def initialize(path: str):
         for sid, answers in [("std-2", {"q1": 1, "q2": 0, "q3": 0, "q4": 1}), ("std-3", {"q1": 0, "q2": 1, "q3": 2, "q4": 0}), ("std-4", {"q1": 1, "q2": 1, "q3": 0, "q4": 0})]:
             db.execute("INSERT INTO attempts(quiz_id,student_id,result,is_sample,created_at) VALUES(?,?,?,?,?)", ("quiz-demo", sid, dumps(assess(questions, answers)), 1, now()))
         db.execute("INSERT INTO messages(student_id,sender,content,created_at) VALUES(?,?,?,?)", ("std-1", "teacher", "누리야, 오늘은 민주주의에 대해 함께 배워요. 낯선 단어는 눌러서 단어장에 모아 보세요. 천천히 읽어도 괜찮아요!", now()))
+        seed_student_example(db)

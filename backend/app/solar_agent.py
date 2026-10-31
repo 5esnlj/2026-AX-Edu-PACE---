@@ -39,6 +39,10 @@ class VisualOutput(OutputModel):
     meaning: Text
 
 
+class ConnectionOutput(OutputModel):
+    reply: Literal["ok"]
+
+
 class MaterialOutput(OutputModel):
     text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=10, max_length=40000)]
     terms: list[TermOutput] = Field(max_length=20)
@@ -95,7 +99,7 @@ class SolarLearningAgent:
     def configured(self) -> bool:
         return bool(self._api_key)
 
-    def _generate(self, instruction: str, data: dict, schema: type[GeneratedOutput]) -> GeneratedOutput:
+    def _generate(self, instruction: str, data: dict, schema: type[GeneratedOutput], *, max_tokens: int = 8000, timeout: float = 90.0) -> GeneratedOutput:
         if not self.configured:
             raise SolarAgentError("Solar API 키가 없습니다. 프로젝트 .env에 UPSTAGE_API_KEY를 입력하고 서버를 다시 실행해 주세요.", 503)
         system = (
@@ -108,7 +112,7 @@ class SolarLearningAgent:
         )
         try:
             # No automatic retry: a repeated completion may incur another charge.
-            with httpx.Client(timeout=httpx.Timeout(90.0, connect=10.0), transport=self._transport) as client:
+            with httpx.Client(timeout=httpx.Timeout(timeout, connect=10.0), transport=self._transport) as client:
                 response = client.post(self.endpoint, headers={"Authorization": f"Bearer {self._api_key}"}, json={
                     "model": self.model,
                     "messages": [
@@ -116,7 +120,7 @@ class SolarLearningAgent:
                         {"role": "user", "content": json.dumps(data, ensure_ascii=False)},
                     ],
                     "temperature": 0.2,
-                    "max_tokens": 8000,
+                    "max_tokens": max_tokens,
                     "response_format": {"type": "json_object"},
                     "stream": False,
                 })
@@ -141,6 +145,42 @@ class SolarLearningAgent:
         except (ValueError, KeyError, IndexError, TypeError, AttributeError, ValidationError):
             # Do not expose upstream bodies, lesson content, credentials or validation input.
             raise SolarAgentError("Solar 응답이 필요한 자료 형식과 맞지 않아 저장하지 않았습니다. 원문을 줄이거나 다시 시도해 주세요.") from None
+
+    def check_connection(self) -> dict:
+        self._generate(
+            '연결 확인 요청입니다. {"reply":"ok"}만 반환하세요.',
+            {"purpose": "connection_check"}, ConnectionOutput,
+            max_tokens=64, timeout=20.0,
+        )
+        return {"connected": True, "model": self.model}
+
+    def student_reconstruct(self, request: dict) -> dict:
+        from .student_l1.models import MaterialOutput
+        from .student_l1.workflow import MATERIAL_PROMPT
+        return self._generate(
+            MATERIAL_PROMPT + "\n앱 출력 계약: sentences에 원문의 id·source와 재구성 rewritten을 넣으세요. "
+            "원문 ID와 문장을 그대로 연결하세요. vocabulary는 원문 핵심어만 담고, 모국어가 없으면 translation은 빈 문자열입니다. "
+            "visual_aids에는 필요한 도식만 source_sentence_ids와 함께 넣으세요. "
+            "이 앱에서는 tts_text·knowledge_state·warnings 등 스키마에 없는 키는 출력하지 않습니다. "
+            "핵심 교과 개념어와 protected_terms는 유지하고, 자료 밖 사실을 추가하지 마세요. "
+            "현재 사전에는 어휘별 검증된 단계 비교 근거가 없으므로 vocabulary.action은 retain 또는 elaborate만 사용하세요. "
+            "설명을 덧붙이고 문장을 나누는 방식으로 지원하며 핵심어를 임의 대체하지 마세요. 아래 JSON 스키마를 따르세요.",
+            request, MaterialOutput,
+        ).model_dump()
+
+    def student_assessment(self, request: dict) -> dict:
+        from .student_l1.models import AssessmentOutput
+        from .student_l1.workflow import ASSESSMENT_PROMPT
+        return self._generate(
+            ASSESSMENT_PROMPT + "\n앱 출력 계약: 검토를 모두 통과한 1~6문항만 items에 넣으세요. "
+            "검토를 통과할 수 없으면 문항을 지어내지 마세요. O/X는 choices=[\"O\",\"X\"], "
+            "4지선다는 choices에 서로 다른 네 개의 선택지, 주관식은 choices=[]를 사용하세요. "
+            "correct_answer는 선택지 문자열 또는 짧은 정답이고 accepted_answers는 주관식 허용 답안입니다. "
+            "현재 앱은 문항 번역을 표시하지 않으므로 translation은 출력하지 마세요. "
+            "lesson_material.sentences에 실제 존재하는 id만 source_sentence_ids에 쓰세요. "
+            "정답·해설·학습 목표를 prompt나 choices에 별도 힌트로 노출하지 마세요. 아래 JSON 스키마를 따르세요.",
+            request, AssessmentOutput, max_tokens=5000,
+        ).model_dump()
 
     def reconstruct(self, source: str, level: int, language: str, modes: list[str]) -> dict:
         if language not in LANGUAGES or level not in (0, 1, 2, 3, 4, 5, 6):

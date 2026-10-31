@@ -61,6 +61,15 @@ test("civil PDF example is reviewed, saved and published with phrase support", a
   await expect(
     page.getByRole("heading", { name: title, exact: true }),
   ).toBeVisible();
+  const preview = page.getByText("원본 지면 변환 예시 보기", { exact: true });
+  await preview.click();
+  await expect(
+    page.getByText(
+      "아직 읽기 진단 결과가 없어 수준별 변환 예시를 적용하지 않아요.",
+      { exact: false },
+    ),
+  ).toBeVisible();
+  await preview.click();
   const mid = page.url().split("/").at(-1)!;
   const material = await page.request
     .get(`/api/materials/${mid}`)
@@ -136,6 +145,27 @@ test("civil PDF example is reviewed, saved and published with phrase support", a
   expect(studentData.variants["std-1"].reading_support.length).toBeGreaterThan(
     0,
   );
+  // The optional page-layout example must not replace the saved teacher edits.
+  await expect(page.locator(".reading-body")).toContainText(changed[0].source);
+  studentData.variants["std-1"].level = 2;
+  await page.route(`**/api/materials/${mid}`, (route) =>
+    route.fulfill({ json: studentData }),
+  );
+  await page.reload();
+  await preview.click();
+  await expect(page.locator(".cv-root")).toBeVisible();
+  await preview.click();
+  studentData.variants["std-1"].level = 0;
+  await page.reload();
+  await preview.click();
+  await expect(
+    page.getByText(
+      "아직 읽기 진단 결과가 없어 수준별 변환 예시를 적용하지 않아요.",
+      { exact: false },
+    ),
+  ).toBeVisible();
+  await expect(page.locator(".cv-root")).toHaveCount(0);
+  await preview.click();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
     await page.evaluate(

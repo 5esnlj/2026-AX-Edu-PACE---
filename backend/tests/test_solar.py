@@ -66,6 +66,44 @@ class SolarTests(unittest.TestCase):
             "targets": targets or ["std-1"], "modes": ["easy", "bilingual", "visual"],
         })
 
+    def test_teacher_connection_probe_uses_selected_model_without_lesson_data(self):
+        client = self.client(self.agent(completion({"reply": "ok"})))
+        self.assertEqual(client.post('/api/agent/check').status_code, 401)
+        self.login(client, 'student')
+        self.assertEqual(client.post('/api/agent/check').status_code, 403)
+        self.login(client)
+        self.assertTrue(client.get('/api/health').json()['configured'])
+        self.assertEqual(self.requests, [])
+        result = client.post('/api/agent/check')
+        self.assertEqual(result.status_code, 200, result.text)
+        self.assertTrue(result.json()['connected'])
+        self.assertEqual(result.json()['model'], 'solar-test-model')
+        payload = json.loads(self.requests[0].content)
+        self.assertEqual(payload['max_tokens'], 64)
+        self.assertEqual(json.loads(payload['messages'][1]['content']), {'purpose':'connection_check'})
+        self.assertNotIn('test-key-never-real', result.text)
+
+    def test_connection_probe_reports_demo_missing_key_and_upstream_failures(self):
+        demo = self.client(DemoLearningAgent())
+        self.login(demo)
+        self.assertEqual(demo.post('/api/agent/check').status_code, 409)
+        with patch.dict(os.environ, {'UPSTAGE_API_KEY': ''}):
+            missing = self.client(self.agent())
+        self.login(missing)
+        self.assertEqual(missing.post('/api/agent/check').status_code, 503)
+        self.assertEqual(self.requests, [])
+        for response, status, message in [
+            (httpx.Response(401, text='private-upstream-secret'), 502, '인증'),
+            (httpx.Response(429, text='private-upstream-secret'), 503, '한도'),
+            (completion({'unexpected':'private-upstream-secret'}), 502, '형식'),
+        ]:
+            client = self.client(self.agent(response))
+            self.login(client)
+            result = client.post('/api/agent/check')
+            self.assertEqual(result.status_code, status)
+            self.assertIn(message, result.json()['detail'])
+            self.assertNotIn('private-upstream-secret', result.text)
+
     def test_request_contract_and_unreviewed_output(self):
         result = self.agent().reconstruct(SAMPLE_TEXT, 2, "en", ["easy", "bilingual", "visual"])
         request = self.requests[0]

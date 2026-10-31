@@ -23,7 +23,7 @@ EDITABLE_FIELDS = ["key_sentences.rewritten", "vocabulary.translation", "vocabul
 
 def fallback_profile(student: dict) -> LearnerProfile:
     return LearnerProfile(
-        grade=student["grade"], native_language=LANGUAGES.get(student["language"]),
+        grade=student["grade"], native_language=LANGUAGES.get(student["language"]) if student["language"] != "und" else None,
         level_scale="diagnostic_1_6", skills={k:v or None for k,v in student["levels"].items()},
         # Unknown values are missing; no conversion from the removed four-level scale.
     )

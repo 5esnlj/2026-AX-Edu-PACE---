@@ -97,6 +97,7 @@ def register(app, path, learner, teacher, session, find_student):
                 qid: f"/api/diagnostic/{row['id']}/audio/{qid}" for qid in audio_ids
             },
             "notice": BANK["notice"],
+            "source": state.get("source"),
         }
         if teacher_view:
             output.update(

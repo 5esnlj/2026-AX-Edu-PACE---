@@ -1,0 +1,77 @@
+{
+  "student": {
+    "id": "std-example-a",
+    "name": "학생 A",
+    "language": "und",
+    "grade": "중학교 1학년 · 중국 이주배경 (첨부 예시)"
+  },
+  "assessment": {
+    "stage": "complete",
+    "current": null,
+    "pending": null,
+    "responses": {},
+    "grades": {},
+    "finished": [
+      "listening",
+      "reading",
+      "writing",
+      "speaking"
+    ],
+    "reported_correct": {
+      "듣-01": true,
+      "듣-02": true,
+      "듣-03": true,
+      "듣-04": true,
+      "듣-05": true,
+      "듣-06": true,
+      "듣-07": true,
+      "듣-08": true,
+      "듣-09": true,
+      "듣-10": true,
+      "듣-11": true,
+      "듣-12": false,
+      "읽-01": true,
+      "읽-02": true,
+      "읽-03": true,
+      "읽-04": true,
+      "읽-05": true,
+      "읽-06": true,
+      "읽-07": true,
+      "읽-08": false,
+      "읽-09": true,
+      "읽-10": true,
+      "읽-11": false,
+      "읽-12": false
+    },
+    "reported_verdicts": {
+      "쓰-1": "P",
+      "쓰-2": "P",
+      "쓰-3": "P",
+      "쓰-4": "P",
+      "쓰-5": "P",
+      "쓰-6": "F",
+      "말-1": "P",
+      "말-2": "P",
+      "말-3": "P",
+      "말-4": "P",
+      "말-5": "B",
+      "말-6": "F"
+    },
+    "source": {
+      "kind": "imported_example",
+      "file_name": "[해커톤 개발] 학생 예시.pdf",
+      "description": "첨부 PDF의 학생 A 진단 결과입니다. 실제 응답·녹음·R1~R4 세부 점수와 진단일은 제공되지 않았습니다. 모국어는 미확인입니다.",
+      "reported_totals": {
+        "쓰-6": 5,
+        "말-5": 7
+      },
+      "reported_mastery_stages": {
+        "B": "M6",
+        "T1": "M6",
+        "T2": "M6",
+        "T3": "M6",
+        "C": "M4"
+      }
+    }
+  }
+}

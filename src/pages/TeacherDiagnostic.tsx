@@ -77,6 +77,24 @@ export function TeacherDiagnostic() {
           </Link>
         }
       />
+      {attempt?.source && (
+        <Notice>
+          <strong>{attempt.source.file_name}</strong>
+          <p>{attempt.source.description}</p>
+          <p>
+            문서에 기재된 합계:{" "}
+            {Object.entries(attempt.source.reported_totals)
+              .map(([q, n]) => `${q} ${n}점`)
+              .join(" · ")}
+          </p>
+          <p>
+            문서의 층위 표기:{" "}
+            {Object.entries(attempt.source.reported_mastery_stages)
+              .map(([k, v]) => `${k} ${v}`)
+              .join(" · ")}
+          </p>
+        </Notice>
+      )}
       {!attempt ? (
         <Notice>
           아직 새 6수준 진단을 시작하지 않았습니다. 학생 화면의 ‘한국어 자가

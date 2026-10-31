@@ -23,7 +23,7 @@ export function ConvertPage(props: Props) {
   latest.current = props;
   const knownKey = (props.known || []).join("|");
   useEffect(() => {
-    if (!ref.current) return;
+    if (!ref.current || props.reading <= 0) return;
     const p = latest.current;
     inst.current = mountConvert(ref.current, {
       ...p,
@@ -43,5 +43,15 @@ export function ConvertPage(props: Props) {
       known: latest.current.known,
     });
   }, [props.scale, props.showOriginal, knownKey]);
+  if (props.reading <= 0) {
+    return (
+      <p>
+        아직 읽기 진단 결과가 없어 수준별 변환 예시를 적용하지 않아요.{" "}
+        <a href={CIVIL_PDF} target="_blank" rel="noreferrer">
+          원본 PDF 보기
+        </a>
+      </p>
+    );
+  }
   return <div ref={ref} />;
 }

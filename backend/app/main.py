@@ -20,6 +20,7 @@ from .database import connect, dumps, initialize, now
 from .solar_agent import SolarAgentError, SolarLearningAgent
 from .diagnosis.api import register as register_diagnostic
 from .l3.api import register as register_learning_path
+from .student_l1.api import register as register_student_l1
 from .l3.workflow import fingerprint
 from .l1.models import LearnerProfile, ReconstructionEdits
 from .l1.civil_trial import example as civil_trial_example
@@ -171,6 +172,15 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
             db.execute("SELECT 1").fetchone()
         return {"status": "ok", "provider": getattr(agent, "provider", "custom"), "configured": getattr(agent, "configured", True), "model": getattr(agent, "model", None), "demo_enabled": demo_enabled}
 
+    @app.post("/api/agent/check")
+    def check_agent(_=Depends(teacher)):
+        if getattr(agent, "provider", "demo") != "solar":
+            raise HTTPException(409, "현재 규칙 기반 데모 모드입니다. 프로젝트 .env에서 IEUM_AGENT_PROVIDER=solar로 설정하고 서버를 다시 실행해 주세요.")
+        try:
+            return {**agent.check_connection(), "checked_at": now()}
+        except SolarAgentError as error:
+            raise HTTPException(error.status_code, str(error)) from None
+
     @app.get("/api/demo")
     def demo():
         if not demo_enabled:
@@ -255,6 +265,7 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
 
     register_diagnostic(app, path, learner, teacher, session, find_student)
     register_learning_path(app, path, learner, teacher, find_student, agent)
+    register_student_l1(app, path, learner, find_student, l1_profile, agent)
 
     @app.get("/api/materials")
     def materials(auth=Depends(session)):

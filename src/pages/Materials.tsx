@@ -29,6 +29,8 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { api, useResource, useAgentHealth } from "../api";
+import { SolarConnection } from "./SolarConnection";
+import { StudentMaterialList } from "./StudentMaterials";
 import { TeacherL1Review } from "./TeacherL1";
 import {
   CIVIL_TRIAL_TITLE,
@@ -91,14 +93,10 @@ export function Materials() {
         description={
           teacher
             ? "하나의 수업 자료를, 학생마다 편안한 배움으로 바꿔요."
-            : "선생님이 나에게 맞게 준비한 자료를 읽어 보세요."
+            : "선생님이 준비한 자료와 내가 직접 재구성한 자료로 함께 배워요."
         }
         action={
-          !teacher ? (
-            <Link className="btn" to="/app/self-study">
-              <Plus size={18} />내 자료로 공부하기
-            </Link>
-          ) : (
+          teacher ? (
             <div className="material-actions">
               <Link className="btn" to="/app/create">
                 <Plus size={18} />
@@ -115,6 +113,10 @@ export function Materials() {
                 변환 예시 (민사 재판)
               </a>
             </div>
+          ) : (
+            <Link className="btn" to="/app/my-materials/create">
+              <Plus size={18} />내 자료 재구성하기
+            </Link>
           )
         }
       />
@@ -140,6 +142,12 @@ export function Materials() {
           />
         </label>
       </div>
+      {!teacher && (
+        <>
+          <StudentMaterialList search={search} subject={subject} />
+          <SectionTitle title="선생님이 보내 준 자료" />
+        </>
+      )}
       {loading ? (
         <Loading />
       ) : (
@@ -194,7 +202,11 @@ export function Materials() {
       )}
       {!loading && !showCivilExample && !visibleMaterials.length && (
         <Empty
-          title="아직 자료가 없어요"
+          title={
+            teacher
+              ? "아직 자료가 없어요"
+              : "선생님이 보내 준 자료가 아직 없어요"
+          }
           description="검색 조건을 바꾸거나 새로운 맞춤 자료를 만들어 보세요."
           action={
             teacher && (
@@ -303,6 +315,7 @@ export function CreateMaterial() {
         title="맞춤 수업 자료 만들기"
         description="원본의 핵심 개념은 지키고, 한국어의 문턱은 낮춰요."
       />
+      <SolarConnection />
       <Stepper step={step} />
       <div className="editor-layout">
         <div>
@@ -861,15 +874,13 @@ function ReviewMaterial({
               {variant.native_language || languages[variant.language]}
             </Badge>
           </SectionTitle>
-          {isCivilVariant(variant) ? (
-            <>
+          {isCivilVariant(variant) && (
+            <details className="l1-card">
+              <summary>원본 지면 변환 예시 보기</summary>
               <p className="muted">
-                원본 지면 그대로 학생에게 보이는 화면이에요. 밑줄·설명·쉬운
-                표현·그림을 누르면 펼쳐지고, 펼친 곳의 ‘수정하기’로 고칠 수
-                있어요. 지면 글자를 드래그하면 밑줄·설명·시각 자료를 직접 추가할
-                수 있어요.
-                {!variant.level &&
-                  " 이 학생은 아직 진단 전이라 중간 단계(읽기 3~4용)로 보여 줘요."}
+                민사 재판의 원본 지면을 활용한 예시입니다. 여기서 수정한 내용은
+                이 브라우저에만 저장됩니다. 실제 배포 자료는 아래 문장별
+                편집에서 수정하고 검토 내용을 저장해 주세요.
               </p>
               <ConvertPage
                 mode="teacher"
@@ -880,24 +891,10 @@ function ReviewMaterial({
                 }
                 name={students.find((s) => s.id === active)!.name}
                 storageKey={`ganada-convert:${item.id}:${active}`}
-                onChange={() => setConfirmed(false)}
               />
-              {variant.reconstruction && (
-                <details className="l1-card">
-                  <summary>에이전트 판단 근거 · 문장별 세부 편집</summary>
-                  <TeacherL1Review
-                    data={variant.reconstruction}
-                    edits={l1Edits[active]}
-                    readOnly={published || busy}
-                    onChange={(next) => {
-                      setL1Edits({ ...l1Edits, [active]: next });
-                      setConfirmed(false);
-                    }}
-                  />
-                </details>
-              )}
-            </>
-          ) : variant.reconstruction ? (
+            </details>
+          )}
+          {variant.reconstruction ? (
             <>
               <TeacherL1Review
                 data={variant.reconstruction}
@@ -1263,38 +1260,41 @@ function ReaderContent({
             <BookOpen size={19} />
           </div>
           <h2>{item.unit || item.title}</h2>
-          {isCivilVariant(variant) ? (
-            <ConvertPage
-              mode="student"
-              reading={variant.level}
-              lang={variant.language}
-              langName={variant.native_language || languages[variant.language]}
-              name=""
-              storageKey={`ganada-convert:${item.id}:${studentId}`}
-              scale={zoom}
-              showOriginal={original}
-              known={learning.known}
-              onWord={(t, kind) => {
-                if (!learning[kind].includes(t)) word(t, kind);
-              }}
+          {variant.source_pdf_url && (
+            <SourcePdfPreview url={variant.source_pdf_url} />
+          )}
+          <div className="reading-body" style={{ fontSize: `${zoom * 19}px` }}>
+            <SupportedReading
+              key={`${original}-${variant.text}`}
+              text={text}
+              support={original ? [] : variant.reading_support}
             />
-          ) : (
-            <>
-              {variant.source_pdf_url && (
-                <SourcePdfPreview url={variant.source_pdf_url} />
-              )}
-              <div
-                className="reading-body"
-                style={{ fontSize: `${zoom * 19}px` }}
-              >
-                <SupportedReading
-                  key={`${original}-${variant.text}`}
-                  text={text}
-                  support={original ? [] : variant.reading_support}
-                />
-              </div>
-              {pictures && <ConceptCards variant={variant} />}
-            </>
+          </div>
+          {pictures && <ConceptCards variant={variant} />}
+          {isCivilVariant(variant) && (
+            <details className="l1-card">
+              <summary>원본 지면 변환 예시 보기</summary>
+              <p className="muted">
+                원본 지면을 활용한 참고 예시예요. 선생님이 검토해 보내 준 학습
+                자료는 위의 글에서 읽어 주세요.
+              </p>
+              <ConvertPage
+                mode="student"
+                reading={variant.level}
+                lang={variant.language}
+                langName={
+                  variant.native_language || languages[variant.language]
+                }
+                name=""
+                storageKey={`ganada-convert:${item.id}:${studentId}`}
+                scale={zoom}
+                showOriginal={original}
+                known={learning.known}
+                onWord={(t, kind) => {
+                  if (!learning[kind].includes(t)) word(t, kind);
+                }}
+              />
+            </details>
           )}
           <div className="reading-bottom">
             작은 이해가 모여, 큰 배움이 되어요. <span>✦</span>

@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "source": "자료 재구성 기준.pdf",
+  "version": "1.0",
+  "core_principles": [
+    "교과 텍스트의 본래 의미와 진정성을 유지한다.",
+    "상세화를 우선하고 필요할 때 단순화를 보완한다.",
+    "학습자의 진단된 학습 한국어 단계까지 어휘를 유지하고, 상위 단계 어휘만 위계에 따라 재구성한다."
+  ],
+  "hierarchy": [
+    {
+      "tier": "1",
+      "name": "생활 한국어",
+      "action": "원문을 유지한다.",
+      "support_if_needed": [
+        "앞뒤 상세화",
+        "관형절 정의 추가",
+        "직관적인 동의어로 보완"
+      ]
+    },
+    {
+      "tier": "2-1",
+      "name": "학습 도구 한국어 - 교실 어휘",
+      "action": "생활 한국어 하위 단계의 어휘로 바꾼다.",
+      "methods": [
+        "저빈도·추상 어휘를 고빈도 동의어로 단순화"
+      ]
+    },
+    {
+      "tier": "2-2",
+      "name": "학습 도구 한국어 - 사고 도구",
+      "action": "하위 단계 단어로 풀어 지시문 문식력 부담을 줄인다.",
+      "methods": [
+        "앞뒤 상세화",
+        "관형절 정의 추가",
+        "직관적 동의어 보완"
+      ]
+    },
+    {
+      "tier": "2-3",
+      "name": "학습 도구 한국어 - 범용 지식 어휘",
+      "action": "목표 어휘를 유지하고 하위 단계 표현으로 풀이한다.",
+      "methods": [
+        "관형절 또는 부연 설명",
+        "예시",
+        "상위어 정의"
+      ]
+    },
+    {
+      "tier": "3",
+      "name": "교과 적응 한국어",
+      "action": "핵심 교과 개념어를 삭제하거나 대체하지 않고 유지한다.",
+      "methods": [
+        "정의",
+        "동의어",
+        "예시",
+        "부연 설명",
+        "볼드·하이라이트·주석"
+      ],
+      "native_language_gloss_for": [
+        "외래어",
+        "한자어",
+        "관용구"
+      ]
+    }
+  ],
+  "method_selection": {
+    "automatic": true,
+    "available_methods": [
+      "쉬운 한국어",
+      "핵심어 모국어 병기",
+      "시각 자료"
+    ],
+    "decision_source": [
+      "학습자 페르소나",
+      "교과별 진단 프로필",
+      "원문 어휘 및 구조"
+    ],
+    "mix_methods_when_supported": true,
+    "do_not_ask_for_manual_korean_level": true,
+    "translation_language_source": "학습자 페르소나의 native_language",
+    "translation_targets": [
+      "범용 지식 어휘 중 핵심어",
+      "교과 적응 한국어 핵심 교과어",
+      "외래어·한자어·관용구"
+    ]
+  },
+  "visual_aid": {
+    "add_when": [
+      "학습자 수준보다 낯선 어휘가 많은 경우",
+      "특정 프로세스",
+      "행동 지침",
+      "목록형 정보"
+    ],
+    "principles": [
+      "핵심 사실과 안내만 보여준다.",
+      "불필요한 배경·복잡한 데이터·다양한 관점은 제외한다.",
+      "간단하고 명확한 그림이나 도식을 핵심 어휘 가까이에 둔다."
+    ],
+    "possible_types": [
+      "순서도",
+      "목록",
+      "비교표",
+      "벤다이어그램"
+    ]
+  },
+  "workflow": [
+    "PDF 텍스트 인식 및 인식 결과 확인",
+    "주요 문장과 핵심어 선별",
+    "학습 한국어 위계에 따라 어휘 분류",
+    "진단 단계까지 어휘 유지, 상위 단계 어휘 재구성",
+    "페르소나의 모국어로 핵심 교과어 병기",
+    "페르소나와 자료에 따라 시각 자료 필요성 판단",
+    "학생이 바로 학습에 사용할 최종 자료 생성"
+  ],
+  "support_planning": {
+    "conceptual_bottleneck_codes": [
+      "C"
+    ]
+  },
+  "student_ready_by_default": true,
+  "optional_comprehension_check": {
+    "enabled": true,
+    "trigger": [
+      "학습 자료 열람 및 학습 완료",
+      "학습자의 문항 풀이 선택"
+    ],
+    "inputs": [
+      "learner_profile",
+      "reconstructed_lesson_material",
+      "evaluation_fairness_rules.json"
+    ],
+    "allowed_item_types": [
+      "true_false",
+      "short_answer",
+      "multiple_choice_4"
+    ],
+    "answer_visibility": "after_submission",
+    "review_before_display": true
+  }
+}
