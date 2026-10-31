@@ -4,9 +4,18 @@ test("PDF example appears with imported diagnosis and a ready learning path", as
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "데모 교실 입장하기" }).click();
+  await expect(
+    page.getByRole("navigation").getByRole("link", { name: "교과어 검토" }),
+  ).toHaveCount(0);
+  await page.goto("/app/glossary");
+  await expect(page).toHaveURL(/\/app\/materials\/translation-review$/);
+  await expect(
+    page.getByRole("heading", { name: /오역 탐지/, level: 1 }),
+  ).toBeVisible();
   await page.goto("/app/students");
   const row = page.getByRole("row").filter({ hasText: "학생 A" });
   await expect(row).toContainText("첨부 PDF 예시");
+  await expect(row).toContainText("중국어");
   await expect(row).toContainText("5+수준");
   await row.getByRole("link", { name: "진단 보기·채점" }).click();
   await expect(

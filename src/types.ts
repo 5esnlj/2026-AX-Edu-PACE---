@@ -123,6 +123,7 @@ export type Message = {
 };
 export const languages: Record<string, string> = {
   und: "미확인",
+  zh: "중국어",
   vi: "베트남어",
   en: "영어",
   uz: "우즈베크어",

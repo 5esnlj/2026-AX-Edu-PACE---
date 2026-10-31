@@ -41,7 +41,6 @@ import { Dashboard } from "./pages/Dashboard";
 import {
   About,
   Diagnostic,
-  Glossary,
   Messages,
   Reports,
   Roadmap,
@@ -203,7 +202,6 @@ const teacherNav = [
   { to: "/app/materials", label: "수업 자료", icon: BookOpen },
   { to: "/app/students", label: "학생 관리", icon: Users },
   { to: "/app/reports", label: "학습 리포트", icon: ClipboardCheck },
-  { to: "/app/glossary", label: "교과어 검토", icon: Languages },
   { to: "/app/messages", label: "메시지", icon: MessageCircle },
 ];
 const studentNav = [
@@ -469,7 +467,7 @@ export function App() {
           path="glossary"
           element={
             <TeacherOnly>
-              <Glossary />
+              <Navigate to="/app/materials/translation-review" replace />
             </TeacherOnly>
           }
         />
