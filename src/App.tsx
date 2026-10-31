@@ -48,6 +48,10 @@ import {
   Students,
 } from "./pages/Learning";
 import { CreateMaterial, MaterialDetail, Materials } from "./pages/Materials";
+import {
+  CreateStudentMaterial,
+  StudentMaterialPage,
+} from "./pages/StudentMaterials";
 import { QuizPage, Quizzes } from "./pages/Quizzes";
 import { TeacherDiagnostic } from "./pages/TeacherDiagnostic";
 import { TranslationReview } from "./pages/TranslationReview";
@@ -220,8 +224,13 @@ function Layout() {
   if (!user) return <Navigate to="/" replace />;
   const nav = user.role === "teacher" ? teacherNav : studentNav;
   const current =
-    nav.find((n) => n.to !== "/app" && location.pathname.startsWith(n.to))
-      ?.label || "교실 홈";
+    nav.find(
+      (n) =>
+        n.to !== "/app" &&
+        (location.pathname.startsWith(n.to) ||
+          (n.to === "/app/materials" &&
+            location.pathname.startsWith("/app/my-materials"))),
+    )?.label || "교실 홈";
   async function exit() {
     try {
       await logout();
@@ -266,7 +275,7 @@ function Layout() {
               end={n.end}
               onClick={() => setMobile(false)}
               className={({ isActive }) =>
-                `nav-item ${isActive ? "active" : ""}`
+                `nav-item ${isActive || (n.to === "/app/materials" && location.pathname.startsWith("/app/my-materials")) ? "active" : ""}`
               }
             >
               <n.icon size={19} />
@@ -398,6 +407,22 @@ export function App() {
           }
         />
         <Route path="materials/:id" element={<MaterialDetail />} />
+        <Route
+          path="my-materials/create"
+          element={
+            <StudentOnly>
+              <CreateStudentMaterial />
+            </StudentOnly>
+          }
+        />
+        <Route
+          path="my-materials/:id"
+          element={
+            <StudentOnly>
+              <StudentMaterialPage />
+            </StudentOnly>
+          }
+        />
         <Route
           path="create"
           element={

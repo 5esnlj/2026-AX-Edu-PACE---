@@ -19,6 +19,7 @@ import {
 } from "../components";
 import { useSession } from "../session";
 import type { Attempt, Quiz, QuizDetail } from "../types";
+import { StudentMaterialList } from "./StudentMaterials";
 
 export function Quizzes() {
   const { user } = useSession();
@@ -35,10 +36,18 @@ export function Quizzes() {
             : "어떤 내용을 이해했는지, 어떤 도움이 더 필요한지 함께 알아봐요."
         }
       />
+      {user!.role === "student" && (
+        <>
+          <StudentMaterialList assessments />
+          <h2>선생님이 준비한 이해 확인</h2>
+        </>
+      )}
       <Notice>
         <strong>공정한 이해 확인</strong> · 정답 단서가 되는 번역·교과어
-        풀이·해설은 제출 전에 제공하지 않습니다. 같은 개념을 일반 문장과 쉬운
-        문장으로 확인하는 4문항이며, 표준화된 평가 도구는 아닙니다.
+        풀이·해설은 제출 전에 제공하지 않습니다. 아래의 교사 배포 문항은 같은
+        개념을 일반 문장과 쉬운 문장으로 확인하는 4문항이며, 표준화된 평가
+        도구는 아닙니다. 내가 만든 자료의 이해 확인은 자료에 따라 문항 수와
+        형식이 달라집니다.
       </Notice>
       {!data ? (
         <Loading />

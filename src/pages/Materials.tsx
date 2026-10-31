@@ -30,6 +30,7 @@ import {
 } from "react-router-dom";
 import { api, useResource, useAgentHealth } from "../api";
 import { SolarConnection } from "./SolarConnection";
+import { StudentMaterialList } from "./StudentMaterials";
 import { TeacherL1Review } from "./TeacherL1";
 import {
   CIVIL_TRIAL_TITLE,
@@ -91,10 +92,10 @@ export function Materials() {
         description={
           teacher
             ? "하나의 수업 자료를, 학생마다 편안한 배움으로 바꿔요."
-            : "선생님이 나에게 맞게 준비한 자료를 읽어 보세요."
+            : "선생님이 준비한 자료와 내가 직접 재구성한 자료로 함께 배워요."
         }
         action={
-          teacher && (
+          teacher ? (
             <div className="material-actions">
               <Link className="btn" to="/app/create">
                 <Plus size={18} />
@@ -111,6 +112,10 @@ export function Materials() {
                 변환 예시 (민사 재판)
               </a>
             </div>
+          ) : (
+            <Link className="btn" to="/app/my-materials/create">
+              <Plus size={18} />내 자료 재구성하기
+            </Link>
           )
         }
       />
@@ -136,6 +141,12 @@ export function Materials() {
           />
         </label>
       </div>
+      {!teacher && (
+        <>
+          <StudentMaterialList search={search} subject={subject} />
+          <SectionTitle title="선생님이 보내 준 자료" />
+        </>
+      )}
       {loading ? (
         <Loading />
       ) : (
@@ -184,7 +195,11 @@ export function Materials() {
       )}
       {!loading && !showCivilExample && !visibleMaterials.length && (
         <Empty
-          title="아직 자료가 없어요"
+          title={
+            teacher
+              ? "아직 자료가 없어요"
+              : "선생님이 보내 준 자료가 아직 없어요"
+          }
           description="검색 조건을 바꾸거나 새로운 맞춤 자료를 만들어 보세요."
           action={
             teacher && (

@@ -1,0 +1,166 @@
+.student-material-section {
+  margin: 24px 0 36px;
+}
+.student-material-section > .section-title {
+  margin-bottom: 18px;
+}
+.student-own-cover {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 28px;
+  background: #eef4ff;
+  color: #384e9a;
+  border-top: 4px solid #f7bd41;
+}
+.student-own-card h3 {
+  margin: 16px 0 8px;
+  font-size: 1.2rem;
+}
+.student-profile-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  color: #596174;
+}
+.student-source-form {
+  margin-top: 22px;
+}
+.student-source-form .form-row .field:first-child {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+.student-upload {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 28px;
+  margin: 24px 0 10px;
+  border: 2px dashed #bcc9e7;
+  border-radius: 16px;
+  background: #f5f8ff;
+}
+.student-upload input {
+  max-width: 100%;
+}
+.student-reader-tabs {
+  margin: 20px 0;
+}
+.student-reader-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 14px;
+}
+.student-reader-tools label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.student-reading {
+  line-height: 1.9;
+}
+.student-sentence {
+  margin-bottom: 25px;
+}
+.student-sentence > p {
+  font-size: 1.2em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.student-sentence details {
+  font-size: 0.92em;
+  color: #5c6574;
+}
+.student-sentence summary,
+.student-source summary {
+  cursor: pointer;
+}
+.student-sentence details p {
+  padding: 14px;
+  border-left: 3px solid #f7bd41;
+  background: #fffaf0;
+  white-space: pre-wrap;
+}
+.student-vocabulary,
+.student-visuals {
+  margin: 28px 0;
+}
+.student-vocabulary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 16px;
+}
+.student-vocabulary h2,
+.student-visuals h2 {
+  margin-bottom: 18px;
+}
+.student-vocabulary .panel {
+  padding: 22px;
+}
+.student-vocabulary h3 {
+  margin: 0;
+}
+.student-term-translation {
+  color: #5069a5;
+}
+.student-source {
+  margin: 24px 0;
+}
+.student-source > p {
+  white-space: pre-wrap;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.student-visuals .panel {
+  margin-bottom: 16px;
+}
+.student-visuals li {
+  padding: 8px 0;
+  line-height: 1.6;
+}
+.student-completion {
+  margin: 26px 0;
+  border-top: 4px solid #38a873;
+}
+.student-opt-in {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 22px 0;
+}
+.student-opt-in input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.student-later {
+  display: block;
+  width: fit-content;
+  margin-top: 20px;
+  color: #5c6574;
+  text-decoration: underline;
+}
+.student-assessment .quiz-result {
+  margin-top: 20px;
+}
+@media (max-width: 600px) {
+  .student-reader-tools .btn {
+    flex: 1;
+  }
+  .student-profile-strip {
+    align-items: flex-start;
+  }
+  .student-completion > .btn {
+    width: 100%;
+  }
+  .student-upload {
+    padding: 20px 14px;
+  }
+}

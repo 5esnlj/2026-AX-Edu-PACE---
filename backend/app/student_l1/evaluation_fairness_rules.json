@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "source": "평가 공정성 규칙.pdf",
+  "assessment_fairness_definition": "학습자가 평가의 과정과 결과를 정당하고 공평하게 인식하는 것",
+  "dimensions": {
+    "distributive": "결과의 공정성에 대한 인식",
+    "procedural": "평가 과정의 공정성",
+    "interpersonal": "상호작용의 적절성",
+    "informational": "정보 제공의 적절성"
+  },
+  "item_review_criteria": [
+    "문항 해결에 필요한 지식과 능력이 학습 목표와 관련되어야 한다.",
+    "특정 개인이나 집단을 비하·차별·고정관념화하는 표현을 사용하지 않는다.",
+    "문제 해결에 필요한 조건과 자료를 충분히 제공한다."
+  ],
+  "allowed_item_types": [
+    "true_false",
+    "short_answer",
+    "multiple_choice_4"
+  ],
+  "translation_note": "원문 PDF의 '번역을 하는 경우' 항목에는 세부 규칙이 기재되어 있지 않다. 번역 시에는 의미와 정보량을 바꾸지 않는다."
+}

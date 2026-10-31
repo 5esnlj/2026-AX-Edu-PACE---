@@ -114,6 +114,12 @@ def initialize(path: str):
           id TEXT PRIMARY KEY, student_id TEXT NOT NULL REFERENCES students(id), fingerprint TEXT NOT NULL,
           result TEXT NOT NULL, progress TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS student_materials (
+          id TEXT PRIMARY KEY, student_id TEXT NOT NULL REFERENCES students(id),
+          title TEXT NOT NULL, subject TEXT NOT NULL, source_text TEXT NOT NULL,
+          profile TEXT NOT NULL, fingerprint TEXT NOT NULL, result TEXT NOT NULL,
+          completed_at TEXT, quiz TEXT, attempt TEXT, created_at TEXT NOT NULL
+        );
         """)
         from .diagnosis.seed_example import seed_student_example
         if db.execute("SELECT count(*) FROM students").fetchone()[0]:
