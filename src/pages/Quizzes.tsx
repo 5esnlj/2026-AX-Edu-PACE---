@@ -19,6 +19,7 @@ import {
 } from "../components";
 import { useSession } from "../session";
 import type { Attempt, Quiz, QuizDetail } from "../types";
+import { StudentPracticeList } from "./StudentPractice";
 import { StudentMaterialList } from "./StudentMaterials";
 
 export function Quizzes() {
@@ -30,6 +31,14 @@ export function Quizzes() {
       <PageHeading
         eyebrow="함께 확인하는 배움"
         title="이해 확인"
+        action={
+          user!.role === "student" && (
+            <Link className="btn" to="/app/practice/create">
+              AI 문제 만들기
+              <ArrowRight size={17} />
+            </Link>
+          )
+        }
         description={
           user!.role === "teacher"
             ? "배포한 자료의 이해 확인 문항을 살펴보세요. 학생 응답은 학습 리포트로 연결됩니다."
@@ -38,6 +47,7 @@ export function Quizzes() {
       />
       {user!.role === "student" && (
         <>
+          <StudentPracticeList />
           <StudentMaterialList assessments />
           <h2>선생님이 준비한 이해 확인</h2>
         </>

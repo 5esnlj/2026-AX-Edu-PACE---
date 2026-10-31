@@ -30,6 +30,7 @@ import {
 } from "react-router-dom";
 import { api, useResource, useAgentHealth } from "../api";
 import { SolarConnection } from "./SolarConnection";
+import { StudentPracticeGenerator } from "./StudentPractice";
 import { StudentMaterialList } from "./StudentMaterials";
 import { TeacherL1Review } from "./TeacherL1";
 import {
@@ -1253,6 +1254,11 @@ function ReaderContent({
           <Printer size={18} />
         </button>
       </div>
+      <StudentPracticeGenerator
+        sourceKind="material"
+        sourceId={item.id}
+        title={item.title}
+      />
       <div className="reader-layout">
         <article className="reading-sheet print-area">
           <div className="reading-label">

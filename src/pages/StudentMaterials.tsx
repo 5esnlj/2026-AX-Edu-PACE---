@@ -2,7 +2,6 @@ import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
-  Check,
   CheckCircle2,
   ClipboardCheck,
   LoaderCircle,
@@ -28,8 +27,10 @@ import {
 } from "../components";
 import { useSession } from "../session";
 import { studentLevelLabel } from "../types";
-import type { StudentAttempt, StudentMaterial } from "../student-materials";
+import type { StudentMaterial } from "../student-materials";
 import "../student-materials.css";
+import { StudentAssessment } from "./StudentAssessment";
+import { StudentPracticeGenerator } from "./StudentPractice";
 
 export function StudentMaterialList({
   search = "",
@@ -48,6 +49,7 @@ export function StudentMaterialList({
       (subject === "전체" || subject === m.subject) &&
       (!assessments || m.quiz),
   );
+  if (assessments && data && !visible.length && !error) return null;
   return (
     <section
       className="student-material-section"
@@ -347,7 +349,6 @@ function StudentReader({ initial }: { initial: StudentMaterial }) {
   const [material, setMaterial] = useState(initial);
   const [query, setQuery] = useSearchParams();
   const showQuiz = query.get("quiz") === "1" && !!material.quiz;
-  const [optIn, setOptIn] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [showVisuals, setShowVisuals] = useState(true);
@@ -358,24 +359,17 @@ function StudentReader({ initial }: { initial: StudentMaterial }) {
     },
     [showQuiz],
   );
-  async function update(action: "complete" | "quiz") {
+  async function update() {
     setError("");
     setBusy(true);
     try {
       const updated = await api<StudentMaterial>(
-        `/student-materials/${material.id}/${action}`,
+        `/student-materials/${material.id}/complete`,
         {
           method: "POST",
-          ...(action === "quiz"
-            ? { body: JSON.stringify({ opt_in: optIn }) }
-            : {}),
         },
       );
       setMaterial(updated);
-      if (action === "quiz") {
-        setQuery({ quiz: "1" });
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -447,7 +441,9 @@ function StudentReader({ initial }: { initial: StudentMaterial }) {
       )}
       {showQuiz ? (
         <StudentAssessment
-          material={material}
+          items={material.quiz!.items}
+          result={material.attempt}
+          submitPath={`/student-materials/${material.id}/quiz/submit`}
           onResult={(attempt) => setMaterial((m) => ({ ...m, attempt }))}
         />
       ) : (
@@ -585,11 +581,7 @@ function StudentReader({ initial }: { initial: StudentMaterial }) {
                   내용을 충분히 살펴봤다면 학습 완료를 눌러 주세요. 이해 확인은
                   그다음에 선택할 수 있어요.
                 </p>
-                <button
-                  className="btn"
-                  disabled={busy}
-                  onClick={() => update("complete")}
-                >
+                <button className="btn" disabled={busy} onClick={update}>
                   <CheckCircle2 size={18} />
                   {busy ? "저장 중…" : "학습 완료"}
                 </button>
@@ -603,6 +595,11 @@ function StudentReader({ initial }: { initial: StudentMaterial }) {
                     ? "이해 확인 결과 보기"
                     : "이해 확인 이어 풀기"}
                 </button>
+                <StudentPracticeGenerator
+                  sourceKind="student_material"
+                  sourceId={material.id}
+                  title={material.title}
+                />
               </>
             ) : (
               <>
@@ -610,35 +607,11 @@ function StudentReader({ initial }: { initial: StudentMaterial }) {
                   원하면 방금 배운 내용으로 문항을 만들 수 있어요. 이 결과는
                   한국어 진단 수준을 바꾸지 않아요.
                 </p>
-                {!material.profile.level ? (
-                  <Notice>
-                    문항을 만들려면 먼저 6수준 진단을 완료한 뒤, 맞춤 자료를
-                    새로 만들어 주세요.{" "}
-                    <Link to="/app/diagnostic">한국어 자가 점검으로 이동</Link>
-                  </Notice>
-                ) : (
-                  <>
-                    <label className="student-opt-in">
-                      <input
-                        type="checkbox"
-                        checked={optIn}
-                        disabled={busy}
-                        onChange={(e) => setOptIn(e.target.checked)}
-                      />
-                      이해 확인 문항을 풀어 볼래요
-                    </label>
-                    <button
-                      className="btn"
-                      disabled={busy || !optIn}
-                      onClick={() => update("quiz")}
-                    >
-                      <ClipboardCheck size={18} />
-                      {busy
-                        ? "배운 내용으로 문항을 만들고 있어요…"
-                        : "이해 확인 문항 만들기"}
-                    </button>
-                  </>
-                )}
+                <StudentPracticeGenerator
+                  sourceKind="student_material"
+                  sourceId={material.id}
+                  title={material.title}
+                />
                 <Link className="student-later" to="/app/materials">
                   오늘은 여기까지 할래요
                 </Link>
@@ -653,157 +626,5 @@ function StudentReader({ initial }: { initial: StudentMaterial }) {
         </div>
       )}
     </>
-  );
-}
-
-function StudentAssessment({
-  material,
-  onResult,
-}: {
-  material: StudentMaterial;
-  onResult: (attempt: StudentAttempt) => void;
-}) {
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const result = material.attempt;
-  const items = material.quiz!.items;
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    setError("");
-    setBusy(true);
-    try {
-      onResult(
-        await api<StudentAttempt>(
-          `/student-materials/${material.id}/quiz/submit`,
-          { method: "POST", body: JSON.stringify({ answers }) },
-        ),
-      );
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <form onSubmit={submit} className="student-assessment">
-      <Notice>
-        이 자료에서 배운 내용만 확인해요. 문항마다 하나씩 답해 주세요. 한국어
-        자가 점검과는 별도의 연습이에요.
-      </Notice>
-      {result && (
-        <section className="quiz-result" role="status">
-          <Badge>오늘의 배움을 확인했어요</Badge>
-          <h2>이해 확인 완료</h2>
-          <div className="result-score">
-            {result.score}
-            <small> / {result.total}개</small>
-          </div>
-          <p>{result.notice}</p>
-        </section>
-      )}
-      <div className="quiz-questions">
-        {items.map((q, index) => {
-          const feedback = result?.results.find((r) => r.id === q.id);
-          const choices =
-            q.type === "true_false" && !q.choices.length
-              ? ["O", "X"]
-              : q.choices;
-          return (
-            <fieldset
-              className={`panel quiz-question ${feedback ? (feedback.correct ? "correct" : "incorrect") : ""}`}
-              key={q.id}
-              aria-labelledby={`prompt-${q.id}`}
-              disabled={busy || !!result}
-            >
-              <legend>
-                <span className="question-number">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                {feedback && (
-                  <Badge tone={feedback.correct ? "green" : "orange"}>
-                    {feedback.correct ? "잘 이해했어요" : "함께 다시 알아봐요"}
-                  </Badge>
-                )}
-              </legend>
-              <h2 id={`prompt-${q.id}`}>{q.prompt}</h2>
-              {q.type === "short_answer" ? (
-                <label className="field">
-                  짧은 답 쓰기
-                  <input
-                    aria-labelledby={`prompt-${q.id}`}
-                    maxLength={500}
-                    required
-                    value={feedback?.selected ?? answers[q.id] ?? ""}
-                    onChange={(e) =>
-                      setAnswers({ ...answers, [q.id]: e.target.value })
-                    }
-                  />
-                </label>
-              ) : (
-                <div className="answer-options">
-                  {choices.map((choice, i) => (
-                    <label
-                      key={i}
-                      className={`${(feedback?.selected ?? answers[q.id]) === choice ? "selected" : ""} ${feedback?.correct_answer === choice ? "right-answer" : ""}`}
-                    >
-                      <input
-                        type="radio"
-                        name={q.id}
-                        value={choice}
-                        required
-                        checked={
-                          (feedback?.selected ?? answers[q.id]) === choice
-                        }
-                        onChange={() =>
-                          setAnswers({ ...answers, [q.id]: choice })
-                        }
-                      />
-                      <span>
-                        {feedback?.correct_answer === choice ? (
-                          <Check size={16} />
-                        ) : (
-                          i + 1
-                        )}
-                      </span>
-                      {choice}
-                    </label>
-                  ))}
-                </div>
-              )}
-              {feedback && (
-                <div className="question-explanation">
-                  <strong>정답: {feedback.correct_answer}</strong>
-                  <p>{feedback.explanation}</p>
-                </div>
-              )}
-            </fieldset>
-          );
-        })}
-      </div>
-      {error && (
-        <div role="alert">
-          <Notice>{error}</Notice>
-        </div>
-      )}
-      {!result && (
-        <div className="form-actions">
-          <p>
-            {items.filter((q) => answers[q.id]?.trim()).length} / {items.length}
-            문항에 답했어요.
-          </p>
-          <button
-            className="btn"
-            disabled={
-              busy || !items.length || items.some((q) => !answers[q.id]?.trim())
-            }
-          >
-            {busy ? "답안을 확인하고 있어요…" : "답안 제출"}
-            <ArrowRight size={17} />
-          </button>
-        </div>
-      )}
-    </form>
   );
 }

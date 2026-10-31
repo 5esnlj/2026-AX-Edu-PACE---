@@ -35,7 +35,7 @@ test("previous self-study URL uses the complete student flow and preserves unit"
   ).toBeVisible();
   await page.getByRole("button", { name: "학습 완료", exact: true }).click();
   await expect(
-    page.getByRole("checkbox", { name: "이해 확인 문항을 풀어 볼래요" }),
+    page.getByRole("checkbox", { name: "자료를 읽었고 문제를 풀어 볼래요" }),
   ).toBeVisible();
 });
 

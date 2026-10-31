@@ -168,6 +168,11 @@ class SolarLearningAgent:
             request, MaterialOutput,
         ).model_dump()
 
+    def generate_practice(self, request: dict) -> dict:
+        from .student_practice.models import Output
+        from .student_practice.workflow import PROMPT
+        return self._generate(PROMPT, request, Output, max_tokens=3500).model_dump()
+
     def student_assessment(self, request: dict) -> dict:
         from .student_l1.models import AssessmentOutput
         from .student_l1.workflow import ASSESSMENT_PROMPT
