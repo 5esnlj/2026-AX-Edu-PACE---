@@ -51,7 +51,7 @@ class StudentL1Tests(unittest.TestCase):
         self.assertEqual(client.post('/api/student-materials', json=INPUT).status_code, 403)
         self.login(client)
         lesson = self.create(client)
-        self.assertEqual(lesson['profile'], {'level': 5, 'native_language': None})
+        self.assertEqual(lesson['profile'], {'level': 5, 'native_language': '중국어'})
         self.assertEqual(lesson['result']['provider'], 'demo')
         self.assertEqual(lesson['result']['sentences'][0]['source'], lesson['result']['sentences'][0]['rewritten'])
         mid = lesson['id']
@@ -119,12 +119,13 @@ class StudentL1Tests(unittest.TestCase):
                 output = demo_assessment(data['lesson_material'])
             else:
                 output = demo_material(data)
-                output['vocabulary'] = [{'term': '원고', 'tier': '3', 'translation': 'DO NOT SHOW', 'simple_meaning': '소송을 제기한 사람', 'action': 'elaborate'}]
+                output['vocabulary'] = [{'term': '원고', 'tier': '3', 'translation': '原告', 'simple_meaning': '소송을 제기한 사람', 'action': 'elaborate'}]
             return httpx.Response(200, json={'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(output)}}]})
         client = self.client(SolarLearningAgent(transport=httpx.MockTransport(handler)))
         self.login(client)
         lesson = self.create(client)
-        self.assertEqual(lesson['result']['vocabulary'][0]['translation'], '')
+        self.assertEqual(lesson['result']['vocabulary'][0]['translation'], '原告')
+        self.assertEqual(requests[0]['learner_profile']['native_language'], '중국어')
         self.assertEqual(requests[0]['learner_profile']['overall_korean_level'], 5)
         self.assertIn('layers', requests[0]['learner_profile']['diagnostic_evidence'])
         self.assertIn('reconstruction_rules', requests[0])
@@ -138,6 +139,10 @@ class StudentL1Tests(unittest.TestCase):
         self.assertTrue(requests[1]['learning_completed'])
         self.assertTrue(requests[1]['learner_opted_in'])
         self.assertIn('item_review_criteria', requests[1]['fairness_rules'])
+        with connect(self.path) as db:
+            db.execute("UPDATE students SET language='und' WHERE id='std-example-a'")
+        unknown = self.create(client)
+        self.assertEqual(unknown['result']['vocabulary'][0]['translation'], '')
 
     def test_stale_diagnosis_blocks_quiz(self):
         client = self.client()
