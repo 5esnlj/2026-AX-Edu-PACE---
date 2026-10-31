@@ -124,37 +124,52 @@ export function Reports() {
                     <p>{attempt.recommendation}</p>
                   </div>
                 </div>
-                <div className="comparison">
-                  <div>
-                    <span>일반 문장 문항</span>
-                    <strong>
-                      {attempt.standard} <small>/ 2개 정답</small>
-                    </strong>
-                    <div className="bar">
-                      <span style={{ width: `${attempt.standard * 50}%` }} />
-                    </div>
+                {attempt.cause && (
+                  <div className="cause-report">
+                    <p>{attempt.cause.reason}</p>
+                    {attempt.cause.notes.map((n) => (
+                      <Notice key={n}>{n}</Notice>
+                    ))}
+                    {!!attempt.cause.wrong.length && (
+                      <div className="cause-list">
+                        {attempt.cause.wrong.map((w) => (
+                          <div key={w.concept} className="cause-item">
+                            <strong>{w.concept}</strong>
+                            <Badge
+                              tone={
+                                w.kind === "language"
+                                  ? "orange"
+                                  : w.kind === "concept"
+                                    ? "purple"
+                                    : "neutral"
+                              }
+                            >
+                              {w.label}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {!!attempt.cause.understood.length && (
+                      <p className="muted">
+                        이해했어요: {attempt.cause.understood.join(", ")}
+                      </p>
+                    )}
+                    <small className="muted">
+                      판정 기준: {attempt.cause.subject || "이 교과"} 학습
+                      한국어 수준이 {attempt.cause.threshold} 이하이면 한국어
+                      어려움, {attempt.cause.threshold + 1} 이상이면 교과 개념
+                      어려움으로 봐요. 진단 전이거나 결과가 불확실하면 판정을
+                      보류해요.
+                    </small>
                   </div>
-                  <div>
-                    <span>언어 부담을 낮춘 상황 문항</span>
-                    <strong>
-                      {attempt.reduced} <small>/ 2개 정답</small>
-                    </strong>
-                    <div className="bar reduced">
-                      <span style={{ width: `${attempt.reduced * 50}%` }} />
-                    </div>
-                  </div>
-                </div>
-                <Notice>
-                  {attempt.caution} 동일 개념 쌍을 비교하는 데모 규칙이며 문항의
-                  동등성·진단 타당도는 검증되지 않았습니다.
-                </Notice>
+                )}
                 <details className="evidence">
                   <summary>문항별 응답 근거 보기</summary>
                   {attempt.results.map((r) => (
                     <div key={r.id}>
                       <span>
-                        {r.id.toUpperCase()} · {r.concept} ·{" "}
-                        {r.load === "standard" ? "일반 문장" : "상황 문항"}
+                        {r.id.toUpperCase()} · {r.concept}
                       </span>
                       <Badge tone={r.correct ? "green" : "orange"}>
                         {r.correct ? "정답" : "다시 살펴보기"}
