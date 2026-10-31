@@ -52,6 +52,10 @@ import {
   StudentMaterialPage,
 } from "./pages/StudentMaterials";
 import { SelfStudy } from "./pages/SelfStudy";
+import {
+  CreateStudentPractice,
+  StudentPracticePage,
+} from "./pages/StudentPractice";
 import { QuizPage, Quizzes } from "./pages/Quizzes";
 import { TeacherDiagnostic } from "./pages/TeacherDiagnostic";
 import { TranslationReview } from "./pages/TranslationReview";
@@ -227,6 +231,8 @@ function Layout() {
       (n) =>
         n.to !== "/app" &&
         (location.pathname.startsWith(n.to) ||
+          (n.to === "/app/quizzes" &&
+            location.pathname.startsWith("/app/practice")) ||
           (n.to === "/app/materials" &&
             (location.pathname.startsWith("/app/my-materials") ||
               location.pathname.startsWith("/app/self-study")))),
@@ -275,7 +281,7 @@ function Layout() {
               end={n.end}
               onClick={() => setMobile(false)}
               className={({ isActive }) =>
-                `nav-item ${isActive || (n.to === "/app/materials" && (location.pathname.startsWith("/app/my-materials") || location.pathname.startsWith("/app/self-study"))) ? "active" : ""}`
+                `nav-item ${isActive || (n.to === "/app/quizzes" && location.pathname.startsWith("/app/practice")) || (n.to === "/app/materials" && (location.pathname.startsWith("/app/my-materials") || location.pathname.startsWith("/app/self-study"))) ? "active" : ""}`
               }
             >
               <n.icon size={19} />
@@ -484,6 +490,22 @@ export function App() {
           element={
             <StudentOnly>
               <Roadmap />
+            </StudentOnly>
+          }
+        />
+        <Route
+          path="practice/create"
+          element={
+            <StudentOnly>
+              <CreateStudentPractice />
+            </StudentOnly>
+          }
+        />
+        <Route
+          path="practice/:id"
+          element={
+            <StudentOnly>
+              <StudentPracticePage />
             </StudentOnly>
           }
         />

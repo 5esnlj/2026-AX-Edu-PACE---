@@ -22,6 +22,7 @@ from .solar_agent import SolarAgentError, SolarLearningAgent
 from .diagnosis.api import register as register_diagnostic
 from .l3.api import register as register_learning_path
 from .student_l1.api import register as register_student_l1
+from .student_practice.api import register as register_student_practice
 from .l3.workflow import fingerprint
 from .l1.models import LearnerProfile, ReconstructionEdits
 from .l1.civil_trial import example as civil_trial_example
@@ -267,6 +268,7 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
     register_diagnostic(app, path, learner, teacher, session, find_student)
     register_learning_path(app, path, learner, teacher, find_student, agent)
     register_student_l1(app, path, learner, find_student, l1_profile, agent)
+    register_student_practice(app, path, learner, find_student, find_material, agent)
 
     @app.get("/api/materials")
     def materials(auth=Depends(session)):

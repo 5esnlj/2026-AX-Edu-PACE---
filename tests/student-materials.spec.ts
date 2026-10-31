@@ -43,22 +43,22 @@ test("student creates a private lesson, opts into assessment and reopens saved f
   await page.getByRole("button", { name: "학습 완료", exact: true }).click();
   await page
     .getByRole("checkbox", {
-      name: "이해 확인 문항을 풀어 볼래요",
+      name: "자료를 읽었고 문제를 풀어 볼래요",
       exact: true,
     })
     .check();
   const generated = page.waitForResponse(
     (r) =>
-      r.url().endsWith(`/student-materials/${id}/quiz`) &&
-      r.request().method() === "POST",
+      r.url().endsWith("/student-practice") && r.request().method() === "POST",
   );
   await page
-    .getByRole("button", { name: "이해 확인 문항 만들기", exact: true })
+    .getByRole("button", { name: "AI 문제 만들기", exact: true })
     .click();
-  expect((await generated).ok()).toBeTruthy();
-  const detail = await (
-    await page.request.get(`/api/student-materials/${id}`)
-  ).json();
+  const generatedResponse = await generated;
+  expect(generatedResponse.ok()).toBeTruthy();
+  const detail = await generatedResponse.json();
+  const practiceId = detail.id;
+  await expect(page).toHaveURL(new RegExp(`/app/practice/${practiceId}$`));
   expect(detail.quiz.items.length).toBeGreaterThan(0);
   for (const item of detail.quiz.items) {
     expect(item).not.toHaveProperty("correct_answer");
@@ -69,7 +69,7 @@ test("student creates a private lesson, opts into assessment and reopens saved f
     else await question.getByRole("radio").first().check();
   }
   const submitted = page.waitForResponse((r) =>
-    r.url().endsWith(`/student-materials/${id}/quiz/submit`),
+    r.url().endsWith(`/student-practice/${practiceId}/submit`),
   );
   await page.getByRole("button", { name: "답안 제출", exact: true }).click();
   const attempt = await (await submitted).json();
