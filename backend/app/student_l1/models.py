@@ -13,6 +13,7 @@ class Model(BaseModel):
 class MaterialInput(Model):
     title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
     subject: Literal["사회", "과학", "수학", "국어"]
+    unit: Annotated[str, StringConstraints(strip_whitespace=True, max_length=100)] = ""
     source_text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=20, max_length=40000)]
 
 

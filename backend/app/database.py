@@ -118,9 +118,14 @@ def initialize(path: str):
           id TEXT PRIMARY KEY, student_id TEXT NOT NULL REFERENCES students(id),
           title TEXT NOT NULL, subject TEXT NOT NULL, source_text TEXT NOT NULL,
           profile TEXT NOT NULL, fingerprint TEXT NOT NULL, result TEXT NOT NULL,
-          completed_at TEXT, quiz TEXT, attempt TEXT, created_at TEXT NOT NULL
+          completed_at TEXT, quiz TEXT, attempt TEXT, created_at TEXT NOT NULL,
+          unit TEXT NOT NULL DEFAULT ''
         );
         """)
+        # Preserve existing student-created lessons when adding optional unit metadata.
+        student_material_columns = {row["name"] for row in db.execute("PRAGMA table_info(student_materials)")}
+        if "unit" not in student_material_columns:
+            db.execute("ALTER TABLE student_materials ADD COLUMN unit TEXT NOT NULL DEFAULT ''")
         from .diagnosis.seed_example import seed_student_example
         if db.execute("SELECT count(*) FROM students").fetchone()[0]:
             seed_student_example(db)

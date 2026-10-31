@@ -52,6 +52,7 @@ import {
   CreateStudentMaterial,
   StudentMaterialPage,
 } from "./pages/StudentMaterials";
+import { SelfStudy } from "./pages/SelfStudy";
 import { QuizPage, Quizzes } from "./pages/Quizzes";
 import { TeacherDiagnostic } from "./pages/TeacherDiagnostic";
 import { TranslationReview } from "./pages/TranslationReview";
@@ -229,7 +230,8 @@ function Layout() {
         n.to !== "/app" &&
         (location.pathname.startsWith(n.to) ||
           (n.to === "/app/materials" &&
-            location.pathname.startsWith("/app/my-materials"))),
+            (location.pathname.startsWith("/app/my-materials") ||
+              location.pathname.startsWith("/app/self-study")))),
     )?.label || "교실 홈";
   async function exit() {
     try {
@@ -275,7 +277,7 @@ function Layout() {
               end={n.end}
               onClick={() => setMobile(false)}
               className={({ isActive }) =>
-                `nav-item ${isActive || (n.to === "/app/materials" && location.pathname.startsWith("/app/my-materials")) ? "active" : ""}`
+                `nav-item ${isActive || (n.to === "/app/materials" && (location.pathname.startsWith("/app/my-materials") || location.pathname.startsWith("/app/self-study"))) ? "active" : ""}`
               }
             >
               <n.icon size={19} />
@@ -404,6 +406,14 @@ export function App() {
             <TeacherOnly>
               <TranslationReview />
             </TeacherOnly>
+          }
+        />
+        <Route
+          path="self-study"
+          element={
+            <StudentOnly>
+              <SelfStudy />
+            </StudentOnly>
           }
         />
         <Route path="materials/:id" element={<MaterialDetail />} />

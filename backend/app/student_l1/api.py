@@ -47,7 +47,7 @@ def register(app, path, learner, find_student, l1_profile, agent):
 
     def present(row):
         profile = json.loads(row["profile"])
-        return {"id": row["id"], "title": row["title"], "subject": row["subject"],
+        return {"id": row["id"], "title": row["title"], "subject": row["subject"], "unit": row["unit"],
                 "source_text": row["source_text"], "result": json.loads(row["result"]),
                 "profile": {"level": profile.get("overall_korean_level"), "native_language": profile.get("native_language")},
                 "completed_at": row["completed_at"], "created_at": row["created_at"],
@@ -88,6 +88,7 @@ def register(app, path, learner, find_student, l1_profile, agent):
         with connect(path) as db:
             profile, fp = profile_for(db, sid)
         request = request_for(profile, data.source_text, data.subject, data.title)
+        request["unit"] = data.unit
         if len(request["source_sentences"]) > 100 or any(len(s["source"]) > 4000 for s in request["source_sentences"]):
             raise HTTPException(422, "문장 사이에 줄바꿈을 넣고 100문장 이하로 나누어 주세요.")
         provider = getattr(agent, "provider", "demo") if profile["overall_korean_level"] else "original"
@@ -103,8 +104,8 @@ def register(app, path, learner, find_student, l1_profile, agent):
         with connect(path) as db:
             if profile_for(db, sid)[1] != fp:
                 raise HTTPException(409, "진단 정보가 바뀌었습니다. 최신 결과로 다시 만들어 주세요.")
-            db.execute("INSERT INTO student_materials(id,student_id,title,subject,source_text,profile,fingerprint,result,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
-                       (mid, sid, data.title, data.subject, data.source_text, dumps(profile), fp, dumps(result), now()))
+            db.execute("INSERT INTO student_materials(id,student_id,title,subject,unit,source_text,profile,fingerprint,result,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                       (mid, sid, data.title, data.subject, data.unit, data.source_text, dumps(profile), fp, dumps(result), now()))
             return present(find(db, mid, sid))
 
     @app.get("/api/student-materials/{mid}")

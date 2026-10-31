@@ -22,6 +22,7 @@ export type StudentMaterial = {
   id: string;
   title: string;
   subject: string;
+  unit?: string;
   source_text: string;
   result: {
     sentences: { id: string; source: string; rewritten: string }[];

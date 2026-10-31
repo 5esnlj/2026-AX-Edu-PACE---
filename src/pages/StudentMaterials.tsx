@@ -108,6 +108,7 @@ export function StudentMaterialList({
                       : "읽어 볼까요?"}
                 </Badge>
                 <h3>{m.title}</h3>
+                {m.unit && <p>{m.unit}</p>}
                 <p>
                   {m.result.provider === "solar"
                     ? "Solar로 재구성한 자료"
@@ -139,6 +140,7 @@ export function CreateStudentMaterial() {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [subject, setSubject] = useState("사회");
+  const [unit, setUnit] = useState("");
   const [source, setSource] = useState("");
   const [filename, setFilename] = useState("");
   const [busy, setBusy] = useState(false);
@@ -174,6 +176,7 @@ export function CreateStudentMaterial() {
         body: JSON.stringify({
           title: title.trim(),
           subject,
+          unit: unit.trim(),
           source_text: source.trim(),
         }),
       });
@@ -240,6 +243,16 @@ export function CreateStudentMaterial() {
             </select>
           </label>
         </div>
+        <label className="field">
+          단원 (선택)
+          <input
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            maxLength={100}
+            placeholder="예: 민주주의와 시민 참여"
+            disabled={busy || extracting}
+          />
+        </label>
         <label className="student-upload">
           <UploadCloud size={25} />
           <span>
@@ -390,7 +403,7 @@ function StudentReader({ initial }: { initial: StudentMaterial }) {
         나의 수업 자료
       </Link>
       <PageHeading
-        eyebrow={`${material.subject} · 나만의 학습 자료`}
+        eyebrow={`${material.subject}${material.unit ? ` · ${material.unit}` : ""} · 나만의 학습 자료`}
         title={material.title}
         description={
           showQuiz

@@ -148,6 +148,27 @@ class StudentL1Tests(unittest.TestCase):
             db.execute("UPDATE students SET diagnostic_summary=NULL WHERE id='std-example-a'")
         self.assertEqual(client.post(base+'/quiz', json={'opt_in':True}).status_code, 409)
 
+    def test_optional_unit_persists_and_existing_database_is_migrated(self):
+        client = self.client()
+        self.login(client)
+        old_lesson = self.create(client)
+        # Simulate the previous released schema in this isolated test database.
+        with connect(self.path) as db:
+            db.execute("ALTER TABLE student_materials DROP COLUMN unit")
+        reopened = self.client()
+        self.login(reopened)
+        migrated = reopened.get('/api/student-materials/'+old_lesson['id']).json()
+        self.assertEqual(migrated['unit'], '')
+        self.assertEqual(migrated['result'], old_lesson['result'])
+        self.assertEqual(migrated['source_text'], SOURCE)
+        created = reopened.post('/api/student-materials', json=dict(INPUT, unit='  민사 재판의 이해  '))
+        self.assertEqual(created.status_code, 201, created.text)
+        self.assertEqual(created.json()['unit'], '민사 재판의 이해')
+        final_client = self.client()
+        self.login(final_client)
+        self.assertEqual(final_client.get('/api/student-materials/'+created.json()['id']).json()['unit'], '민사 재판의 이해')
+        self.assertEqual(final_client.post('/api/student-materials', json=dict(INPUT, unit='가' * 101)).status_code, 422)
+
     def test_pdf_rejections_and_valid_text_pdf(self):
         client = self.client()
         self.login(client)
