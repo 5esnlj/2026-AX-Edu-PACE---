@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field, StrictInt, field_validator
 from pypdf import PdfReader
 from contextlib import asynccontextmanager
 
+from .cause import classify_causes
 from .agents import LANGUAGES, SUBJECTS, GLOSSARY, SAMPLE_TEXT, LearningAgent, DemoLearningAgent, assess, public_questions
 from .database import connect, dumps, initialize, now
 from .solar_agent import SolarAgentError, SolarLearningAgent
@@ -531,7 +532,14 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
                                           (student["id"], fingerprint(student["diagnostic_summary"]))).fetchone()
                 completed = len(json.loads(current_path["progress"])) if current_path else 0
                 total = len(json.loads(current_path["result"])["roadmap"]) if current_path else 0
-                result.append({"student": student, "attempt": dict(json.loads(attempt["result"]), is_sample=bool(attempt["is_sample"]), created_at=attempt["created_at"]) if attempt else None, "completed_steps": completed, "total_steps": total, "saved_words": sum(len(json.loads(r[0])) for r in db.execute("SELECT unknown FROM learning WHERE student_id=?", (student["id"],)))})
+                attempt_data = None
+                if attempt:
+                    attempt_data = dict(json.loads(attempt["result"]), is_sample=bool(attempt["is_sample"]), created_at=attempt["created_at"])
+                    subject = db.execute("SELECT m.subject FROM quizzes q JOIN materials m ON m.id=q.material_id WHERE q.id=?", (attempt["quiz_id"],)).fetchone()
+                    cause = classify_causes(attempt_data["results"], subject[0] if subject else None, student["diagnostic_summary"])
+                    # 원인 구분 기준(교과별 학습 한국어 수준)으로 지원 방향을 정해요.
+                    attempt_data.update(cause=cause, kind=cause["kind"], label=cause["label"], recommendation=cause["action"])
+                result.append({"student": student, "attempt": attempt_data, "completed_steps": completed, "total_steps": total, "saved_words": sum(len(json.loads(r[0])) for r in db.execute("SELECT unknown FROM learning WHERE student_id=?", (student["id"],)))})
             return result
 
     @app.get("/api/learning/{mid}")

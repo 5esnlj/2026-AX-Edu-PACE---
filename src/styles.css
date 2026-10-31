@@ -5173,3 +5173,26 @@ select:focus {
 .material-actions .translation-action:hover {
   background: #e9ddfa;
 }
+
+/* 교사 리포트 · 학습 결손 원인 구분 */
+.cause-report {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.cause-report p {
+  margin: 0;
+}
+.cause-list {
+  display: grid;
+  gap: 6px;
+}
+.cause-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}

@@ -77,6 +77,18 @@ export type Attempt = {
   caution: string;
   is_sample?: boolean;
   created_at?: string;
+  cause?: {
+    subject: string | null;
+    subject_level: number | null;
+    threshold: number;
+    kind: "language" | "concept" | "pending" | "steady";
+    label: string;
+    reason: string;
+    action: string;
+    notes: string[];
+    wrong: { concept: string; kind: string; label: string }[];
+    understood: string[];
+  };
   results: {
     id: string;
     correct: boolean;
