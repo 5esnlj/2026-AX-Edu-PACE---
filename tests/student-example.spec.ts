@@ -8,10 +8,7 @@ test("PDF example appears with imported diagnosis and a ready learning path", as
     page.getByRole("navigation").getByRole("link", { name: "교과어 검토" }),
   ).toHaveCount(0);
   await page.goto("/app/glossary");
-  await expect(page).toHaveURL(/\/app\/materials\/translation-review$/);
-  await expect(
-    page.getByRole("heading", { name: /오역 탐지/, level: 1 }),
-  ).toBeVisible();
+  await expect(page).toHaveURL(/\/app\/materials$/);
   await page.goto("/app/students");
   const row = page.getByRole("row").filter({ hasText: "학생 A" });
   await expect(row).toContainText("첨부 PDF 예시");

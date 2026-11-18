@@ -369,7 +369,7 @@ body.drawing .inkc{pointer-events:auto;touch-action:none;cursor:crosshair}
 <div class="wrap">
   <section class="ctrl" aria-label="화면 머리">
     <div class="phead"><div><h1 id="ctrlTitle">수업 자료 만들기</h1><p id="ctrlSub"></p></div><div class="row" id="headBtns"></div></div>
-    <div class="tabs2" id="tTabs" role="tablist"><button type="button" id="v-make" data-view="make">자료 재구성</button><button type="button" id="v-check" data-view="check">오역 찾기<span class="count" id="misCnt" hidden></span></button></div>
+    <div class="tabs2" id="tTabs" role="tablist"><button type="button" id="v-make" data-view="make">자료 재구성</button><button type="button" id="v-check" data-view="check" hidden>오역 찾기<span class="count" id="misCnt" hidden></span></button></div>
     <div class="dispbar sv">
     <div class="row" id="stuSeg" hidden></div>
     <div class="row">
@@ -1205,7 +1205,7 @@ function makeHTML(){
   if (st.mk==="processing") return `<div class="tcard"><h2>자료를 재구성하고 있어요</h2><dl class="meta"><dt>파일</dt><dd>${esc(mkName())}</dd></dl>
      <ol class="steps2">${MK_STEPS.map((x,i)=>`<li class="${i<st.mkStep?"done":(i===st.mkStep?"on":"")}"><span class="d">${i<st.mkStep?"✓":""}</span>${x}</li>`).join("")}</ol></div>`;
   if (st.mk==="sent") return `<div class="empty"><b>학생 ${st.mkGroups.size}명에게 최종본을 보냈어요</b><p>${[...st.mkGroups].map(g=>STU[g].name).join(", ")} 학생 화면에 자료가 나타납니다.</p>
-     <div class="row" style="justify-content:center"><button type="button" class="btn p" data-host="s-study">학생 화면에서 보기</button><button type="button" class="btn s" data-view="check">오역 찾기</button><button type="button" class="btn s" id="mkNew">새 자료 만들기</button></div></div>`;
+     <div class="row" style="justify-content:center"><button type="button" class="btn p" data-host="s-study">학생 화면에서 보기</button><button type="button" class="btn s" id="mkNew">새 자료 만들기</button></div></div>`;
   const groups = [...st.mkGroups];
   if (!groups.includes(st.mkG)) st.mkG = groups[0];
   const g = groupStats(st.mkG);
@@ -1215,7 +1215,7 @@ function makeHTML(){
     <div class="ltabs">${groups.map(k=>`<button type="button" data-mkg="${k}" aria-pressed="${st.mkG===k}">${STU[k].name}<span class="apv ${st.approved.has(k)?"y":"n"}">${st.approved.has(k)?"승인":"검토 전"}</span><small>${STU[k].lv} · ${STU[k].ln}</small></button>`).join("")}</div>
     <div class="stat"><div><b>${g.sw}</b><span>바꾼 표현</span></div><div><b>${g.terms}</b><span>모국어 병기 용어</span></div><div><b>${g.more}</b><span>쉬운 표현</span></div><div><b>${g.vis}</b><span>그림</span></div></div>
     <div class="row"><span class="pill2 ${st.approved.has(st.mkG)?"g":"r"}">${st.approved.has(st.mkG)?"승인됨 · 최종본":"교사 검토가 필요한 초안"}</span><span class="pill2">인식: 성공 · 불확실 구간 0</span>${decision(st.mkG).warns.length?`<span class="pill2 r">경고 ${decision(st.mkG).warns.length}</span>`:""}</div>
-    <p class="note" style="color:var(--sub)">밑줄·설명·쉬운 표현·그림을 누르면 펼쳐지고, 펼친 곳의 <b style="color:var(--title)">수정하기</b>로 고칠 수 있습니다. <b style="color:var(--title)">지면의 글자를 드래그하면 밑줄·설명·시각 자료를 직접 추가할 수 있습니다.</b>${myRev||myEd?` 이 그룹에서 되돌림 ${myRev}건, 직접 수정 ${myEd}건.`:""} 모국어 병기의 오역은 승인 전후 언제든 <button type="button" class="btn s" data-view="check" style="padding:2px 10px">오역 찾기</button>에서 점검할 수 있습니다.</p></div>${evidenceHTML(st.mkG)}`;
+    <p class="note" style="color:var(--sub)">밑줄·설명·쉬운 표현·그림을 누르면 펼쳐지고, 펼친 곳의 <b style="color:var(--title)">수정하기</b>로 고칠 수 있습니다. <b style="color:var(--title)">지면의 글자를 드래그하면 밑줄·설명·시각 자료를 직접 추가할 수 있습니다.</b>${myRev||myEd?` 이 그룹에서 되돌림 ${myRev}건, 직접 수정 ${myEd}건.`:""} 모국어 병기의 오역은 승인 전후 언제든 교사 검토에서 확인해 주세요.</p></div>${evidenceHTML(st.mkG)}`;
 }
 function reviewBar(){
   const groups = [...st.mkGroups], ok = st.approved.has(st.mkG), all = groups.every(k=>st.approved.has(k));

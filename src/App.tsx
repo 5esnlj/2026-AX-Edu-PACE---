@@ -58,7 +58,6 @@ import {
 } from "./pages/StudentPractice";
 import { QuizPage, Quizzes } from "./pages/Quizzes";
 import { TeacherDiagnostic } from "./pages/TeacherDiagnostic";
-import { TranslationReview } from "./pages/TranslationReview";
 import { useSession } from "./session";
 import type { Role, Student } from "./types";
 import { languages } from "./types";
@@ -405,14 +404,6 @@ export function App() {
         <Route index element={<Dashboard />} />
         <Route path="materials" element={<Materials />} />
         <Route
-          path="materials/translation-review"
-          element={
-            <TeacherOnly>
-              <TranslationReview />
-            </TeacherOnly>
-          }
-        />
-        <Route
           path="self-study"
           element={
             <StudentOnly>
@@ -473,7 +464,7 @@ export function App() {
           path="glossary"
           element={
             <TeacherOnly>
-              <Navigate to="/app/materials/translation-review" replace />
+              <Navigate to="/app/materials" replace />
             </TeacherOnly>
           }
         />

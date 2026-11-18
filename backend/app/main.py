@@ -25,8 +25,6 @@ from .student_practice.api import register as register_student_practice
 from .l3.workflow import fingerprint
 from .l1.models import LearnerProfile, ReconstructionEdits
 from .l1.civil_trial import example as civil_trial_example
-from .l2.models import AnalyzeInput
-from .l2.workflow import GLOSSARY as L2_GLOSSARY, LANGUAGES as L2_LANGUAGES, prepare_request as prepare_l2, demo_analysis, normalize_output as normalize_l2
 from .l1.workflow import (
     ROOT as L1_ROOT, fallback_profile, prepare_request, normalize_output, render_variant,
     demo_output, apply_teacher_edits,
@@ -302,50 +300,6 @@ def create_app(db_path: str | None = None, learning_agent: LearningAgent | None 
         if len(text) > 40000:
             raise HTTPException(422, "추출 텍스트가 너무 깁니다. 40,000자 이하로 나누어 올려 주세요.")
         return {"text": text, "pages": len(pdf.pages), "filename": file.filename}
-
-    @app.get("/api/translation-review/glossary")
-    def translation_glossary(_=Depends(teacher)):
-        return {**L2_GLOSSARY, "analysis_languages": L2_LANGUAGES}
-
-    @app.post("/api/translation-reviews", status_code=201)
-    def analyze_translation(data: AnalyzeInput, auth=Depends(teacher)):
-        if data.material_id:
-            with connect(path) as db:
-                find_material(db, data.material_id, auth)
-        try:
-            request = prepare_l2(data)
-            if getattr(agent, "provider", "") == "demo":
-                output = demo_analysis(data, request)
-            elif callable(getattr(agent, "analyze_translation", None)):
-                output = agent.analyze_translation(request)
-            else:
-                raise HTTPException(503, "현재 에이전트가 오역 탐지를 지원하지 않습니다.")
-            result = normalize_l2(output, data, request, agent.provider)
-        except SolarAgentError as exc:
-            raise HTTPException(exc.status_code, str(exc)) from None
-        except ValueError:
-            raise HTTPException(422, "분석 입력과 결과 형식을 확인해 주세요. 본문은 40,000자·500문단 이하로 나누어 입력해 주세요.") from None
-        rid, created = "review-" + secrets.token_hex(6), now()
-        parameters = data.model_dump(exclude={"document_text", "title", "material_id"})
-        with connect(path) as db:
-            db.execute("INSERT INTO translation_reviews VALUES(?,?,?,?,?,?,?)", (rid, data.title, data.material_id, data.document_text, dumps(parameters), dumps(result), created))
-        return {"id": rid, "title": data.title, "material_id": data.material_id, "document_text": data.document_text,
-                "parameters": parameters, "result": result, "created_at": created}
-
-    @app.get("/api/translation-reviews")
-    def list_translation_reviews(_=Depends(teacher)):
-        with connect(path) as db:
-            rows = db.execute("SELECT id,title,material_id,result,created_at FROM translation_reviews ORDER BY created_at DESC LIMIT 100").fetchall()
-        return [{"id": r["id"], "title": r["title"], "material_id": r["material_id"], "created_at": r["created_at"],
-                 "counts": json.loads(r["result"])["counts"], "needs_selection": json.loads(r["result"])["needs_selection"]} for r in rows]
-
-    @app.get("/api/translation-reviews/{rid}")
-    def get_translation_review(rid: str, _=Depends(teacher)):
-        with connect(path) as db:
-            row = db.execute("SELECT * FROM translation_reviews WHERE id=?", (rid,)).fetchone()
-        if not row:
-            raise HTTPException(404, "오역 검토 기록을 찾을 수 없습니다.")
-        return {**dict(row), "parameters": json.loads(row["parameters"]), "result": json.loads(row["result"])}
 
     def make_variants(data, targets):
         with connect(path) as db:
