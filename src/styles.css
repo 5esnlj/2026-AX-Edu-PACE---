@@ -5173,3 +5173,44 @@ select:focus {
 .material-actions .translation-action:hover {
   background: #e9ddfa;
 }
+
+/* 원본과 나란히 보기 (교사 검토 · 학생 읽기) */
+.reader-layout.comparing {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 280px;
+}
+.compare-panel {
+  position: sticky;
+  top: 16px;
+  align-self: start;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+}
+.compare-pages {
+  display: grid;
+  gap: 12px;
+}
+.compare-pages img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+@media (max-width: 1200px) {
+  .reader-layout.comparing {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .reader-layout.comparing .reader-notes {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 760px) {
+  .reader-layout.comparing {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .compare-panel {
+    position: static;
+    max-height: none;
+  }
+}

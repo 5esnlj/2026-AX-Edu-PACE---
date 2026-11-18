@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
+  Columns2,
   Check,
   CheckCircle2,
   Eye,
@@ -42,6 +43,7 @@ import {
   type CivilTrialExample,
 } from "./ReconstructionSupport";
 import { ConvertPage, isCivilVariant } from "../convert/ConvertPage";
+import { OriginalSource } from "../convert/Compare";
 import { toL1Edits, type L1Edits } from "../l1";
 import {
   Avatar,
@@ -102,13 +104,6 @@ export function Materials() {
               <Link className="btn" to="/app/create">
                 <Plus size={18} />
                 맞춤 자료 만들기
-              </Link>
-              <Link
-                className="btn secondary translation-action"
-                to="/app/materials/translation-review"
-              >
-                <Languages size={18} />
-                오역 탐지
               </Link>
               <a className="btn secondary" href="/convert/view.html?view=make">
                 변환 예시 (민사 재판)
@@ -800,14 +795,6 @@ function ReviewMaterial({
         }
       />
       {!published && <Stepper step={3} />}
-      <p>
-        <Link
-          className="text-link"
-          to={`/app/materials/translation-review?material=${item.id}`}
-        >
-          이 자료의 오역 탐지 (L2) 열기
-        </Link>
-      </p>
       <div className="review-controls">
         <div className="variant-tabs" aria-label="학생별 자료 선택">
           {item.targets.map((id) => {
@@ -840,32 +827,25 @@ function ReviewMaterial({
         {variant.notice} 저자원 언어를 포함한 번역은 전문 검수되지 않았습니다.
         모든 학생의 번역과 글을 확인해야 배포할 수 있습니다.
       </Notice>
-      <div
-        className={
-          isCivilVariant(variant) ? "review-grid cv-single" : "review-grid"
-        }
-      >
-        {!isCivilVariant(variant) && (
-          <section className="panel">
-            <SectionTitle title="원본 자료">
-              <Badge tone="neutral">원본 보존</Badge>
-            </SectionTitle>
-            {(variant.source_pdf_url ||
-              variant.reconstruction?.document?.source_pdf_url) && (
-              <SourcePdfPreview
-                url={
-                  (variant.source_pdf_url ||
-                    variant.reconstruction?.document?.source_pdf_url)!
-                }
-              />
-            )}
-            <div className="original-text">
-              {item.source_text.split("\n").map((p, i) => (
-                <p key={i}>{p}</p>
-              ))}
-            </div>
-          </section>
-        )}
+      <div className="review-grid">
+        <section className="panel compare-panel">
+          <SectionTitle title="원본 자료">
+            <Badge tone="neutral">원본 보존</Badge>
+          </SectionTitle>
+          <OriginalSource
+            text={item.source_text}
+            pdfUrl={
+              variant.source_pdf_url ||
+              variant.reconstruction?.document?.source_pdf_url
+            }
+          />
+          {isCivilVariant(variant) && (
+            <details className="l1-card">
+              <summary>원문 글 보기</summary>
+              <OriginalSource text={item.source_text} />
+            </details>
+          )}
+        </section>
         <section className="panel print-area">
           <SectionTitle
             title={`${students.find((s) => s.id === active)!.name}의 맞춤 자료`}
@@ -876,7 +856,7 @@ function ReviewMaterial({
             </Badge>
           </SectionTitle>
           {isCivilVariant(variant) && (
-            <details className="l1-card">
+            <details className="l1-card" open>
               <summary>원본 지면 변환 예시 보기</summary>
               <p className="muted">
                 민사 재판의 원본 지면을 활용한 예시입니다. 여기서 수정한 내용은
@@ -1117,6 +1097,10 @@ function ReaderContent({
   const [zoom, setZoom] = useState(1);
   const [pictures, setPictures] = useState(true);
   const [original, setOriginal] = useState(false);
+  // 변환된 자료를 원본과 나란히 비교해 봐요. 넓은 화면에서는 처음부터 켜 둬요.
+  const [compare, setCompare] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1100,
+  );
   const [speaking, setSpeaking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -1247,6 +1231,14 @@ function ReaderContent({
           {original ? "쉬운 글 보기" : "원본 보기"}
         </button>
         <button
+          className="btn secondary small"
+          aria-pressed={compare}
+          onClick={() => setCompare(!compare)}
+        >
+          <Columns2 size={16} />
+          {compare ? "나란히 보기 끄기" : "원본과 나란히 보기"}
+        </button>
+        <button
           className="icon-btn"
           aria-label="인쇄 및 PDF 저장"
           onClick={() => window.print()}
@@ -1259,14 +1251,26 @@ function ReaderContent({
         sourceId={item.id}
         title={item.title}
       />
-      <div className="reader-layout">
+      <div className={compare ? "reader-layout comparing" : "reader-layout"}>
+        {compare && (
+          <section className="panel compare-panel">
+            <SectionTitle title="원본 자료">
+              <Badge tone="neutral">원본</Badge>
+            </SectionTitle>
+            <OriginalSource
+              text={item.source_text}
+              pdfUrl={variant.source_pdf_url}
+              fontSize={zoom * 17}
+            />
+          </section>
+        )}
         <article className="reading-sheet print-area">
           <div className="reading-label">
             <span>오늘의 배움</span>
             <BookOpen size={19} />
           </div>
           <h2>{item.unit || item.title}</h2>
-          {variant.source_pdf_url && (
+          {variant.source_pdf_url && !compare && (
             <SourcePdfPreview url={variant.source_pdf_url} />
           )}
           <div className="reading-body" style={{ fontSize: `${zoom * 19}px` }}>
@@ -1278,7 +1282,7 @@ function ReaderContent({
           </div>
           {pictures && <ConceptCards variant={variant} />}
           {isCivilVariant(variant) && (
-            <details className="l1-card">
+            <details className="l1-card" open>
               <summary>원본 지면 변환 예시 보기</summary>
               <p className="muted">
                 원본 지면을 활용한 참고 예시예요. 선생님이 검토해 보내 준 학습
