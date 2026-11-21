@@ -1,0 +1,12 @@
+.tile {
+  display: flex; flex-direction: column; justify-content: space-between;
+  min-height: 112px; padding: 20px var(--space-l);
+  border: 0; border-radius: var(--radius-main);
+  background: var(--tone-bg); text-align: left;
+}
+.top { display: flex; justify-content: space-between; align-items: center; }
+.label { font-size: 17px; font-weight: var(--font-weight-bold); color: var(--tone-title); }
+.go { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--color-surface); }
+.value { display: flex; align-items: baseline; gap: 4px; }
+.number { font-size: var(--font-size-big-number); font-weight: var(--font-weight-bold); line-height: 1.2; }
+.unit { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--color-text-sub); }

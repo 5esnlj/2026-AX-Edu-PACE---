@@ -1,0 +1,104 @@
+/* =========================================================
+   가나다계단 · 디자인 토큰 (전역 CSS)
+   출처: 피그마 "가나다계단 — 프론트엔드 화면 시안" 변수
+   규칙: 컴포넌트에서 색·둥글기·간격을 직접 쓰지 말고 아래 변수만 쓴다.
+   ========================================================= */
+
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+
+:root {
+  /* ---------- 기본 색 ---------- */
+  --color-primary: #EF5044;        /* 로고 레드. 주요 버튼, 지금 보는 메뉴, 경고 표시에만 */
+  --color-on-primary: #FFFFFF;     /* 레드 위 글자 */
+  --color-background: #FCFBFA;     /* 페이지 바탕 */
+  --color-surface: #FFFFFF;        /* 카드·패널·상단바·사이드바 */
+  --color-text: #26231F;           /* 본문 글자, 진행 막대 */
+  --color-text-sub: #8A847C;       /* 보조 글자, 비활성 아이콘 */
+  --color-line: #EFECE7;           /* 표 구분선, 테두리 */
+  --color-track: #EEEAE4;          /* 진행 막대 바탕 */
+  --color-border-strong: #D9D3CB;  /* 점선 업로드 칸 테두리 */
+
+  /* ---------- 카드 바탕(연한 색) ---------- */
+  --card-red: #FDEDEB;     /* 지금 보는 메뉴 바탕, 할 일 카드 */
+  --card-blue: #EAF2FB;
+  --card-yellow: #FFF6DC;
+  --card-green: #EAF5EE;
+  --card-orange: #FEF1E6;
+  --card-purple: #F3EFFA;
+  --card-indigo: #EEF0FB;
+
+  /* ---------- 카드 제목색(연한 카드 위 글자) ---------- */
+  --title-blue: #2A6FBF;
+  --title-yellow: #A87700;
+  --title-green: #21804C;
+
+  /* ---------- 로고·강조 색(진한 색) ---------- */
+  --accent-yellow: #FFC93A;
+  --accent-orange: #F7962F;
+  --accent-blue: #3B8FE0;
+  --accent-green: #3DBB74;
+  --accent-purple: #9B5BD6;
+  --accent-indigo: #4B5BD4;
+
+  /* ---------- 수준 표시 ---------- */
+  --level-below-bg: #F3F1EE;   /* 초급 미달 */
+  --level-basic-bg: var(--card-orange);     /* 초급 */
+  --level-mid-bg: var(--card-yellow);       /* 중급 */
+  --level-high-bg: var(--card-green);       /* 고급 */
+  --level-basic-bar: var(--accent-orange);
+  --level-mid-bar: var(--accent-yellow);
+  --level-high-bar: var(--accent-green);
+
+  /* ---------- 둥글기 ---------- */
+  --radius-main: 32px;     /* 카드, 패널, 큰 타일 */
+  --radius-button: 20px;   /* 버튼, 목록 줄, 입력칸 */
+  --radius-chip: 999px;    /* 칩, 수준 표시, 필터 */
+  --radius-icon: 18px;     /* 아이콘 타일 */
+
+  /* ---------- 간격 ---------- */
+  --space-xs: 8px;
+  --space-s: 12px;
+  --space-m: 16px;
+  --space-l: 24px;
+  --space-xl: 32px;
+  --space-xxl: 40px;
+
+  /* ---------- 그림자 ---------- */
+  --shadow-soft: 0 10px 30px rgba(51, 38, 26, 0.07);
+
+  /* ---------- 글꼴 ---------- */
+  --font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-bold: 700;
+  --font-medium: 500;
+  --font-regular: 400;
+
+  --text-page-title: 32px;   /* 화면 제목 */
+  --text-card-title: 22px;   /* 카드·패널 제목 */
+  --text-big-number: 40px;   /* 요약 타일 숫자 */
+  --text-body: 18px;         /* 목록 이름, 메뉴 */
+  --text-small: 15px;        /* 보조 정보, 칩 */
+  --text-caption: 14px;      /* 표 머리글, 날짜 */
+
+  /* ---------- 레이아웃 ---------- */
+  --layout-width: 1440px;      /* 기준 화면 너비 */
+  --topbar-height: 84px;
+  --sidebar-width: 260px;
+  --content-padding-x: 40px;
+  --content-padding-y: 32px;
+}
+
+/* ---------- 기본 스타일 ---------- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  font-family: var(--font-family);
+  font-weight: var(--font-regular);
+  color: var(--color-text);
+  background: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font-family: inherit; cursor: pointer; }

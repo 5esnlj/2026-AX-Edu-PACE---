@@ -1,0 +1,58 @@
+/**
+ * 자동 생성 파일 — 직접 고치지 말고 tokens/global.json을 고친 뒤 npm run tokens
+ */
+
+:root {
+  --color-primary: #ef5044; /** 로고 레드. 주요 버튼·지금 보는 메뉴·경고에만 */
+  --color-on-primary: #ffffff;
+  --color-background: #fcfbfa; /** 페이지 바탕 */
+  --color-surface: #ffffff; /** 카드·패널·상단바·사이드바 */
+  --color-text: #26231f; /** 본문 글자, 진행 막대, 선택된 칩 */
+  --color-text-sub: #8a847c;
+  --color-line: #efece7; /** 구분선, 진행 막대 바탕 */
+  --color-border: #ddd8d1; /** 보조 버튼·칩 테두리 */
+  --color-placeholder: #eeeae4; /** 썸네일 글줄 */
+  --color-card-red: #fdedeb;
+  --color-card-blue: #eaf2fb;
+  --color-card-yellow: #fff6dc;
+  --color-card-green: #eaf5ee;
+  --color-card-orange: #fef1e6;
+  --color-card-purple: #f3effa;
+  --color-card-indigo: #eef0fb;
+  --color-title-blue: #2a6fbf;
+  --color-title-yellow: #a87700;
+  --color-title-green: #21804c;
+  --color-accent-yellow: #ffc93a;
+  --color-accent-orange: #f7962f;
+  --color-accent-blue: #3b8fe0;
+  --color-accent-green: #3dbb74;
+  --color-accent-purple: #9b5bd6;
+  --color-accent-indigo: #4b5bd4;
+  --radius-main: 32px; /** 카드·패널 */
+  --radius-button: 20px; /** 버튼·입력칸 */
+  --radius-icon: 18px; /** 아이콘 타일·사이드바 카드 */
+  --radius-nav: 14px; /** 사이드바 메뉴 */
+  --radius-chip: 999px;
+  --space-xs: 8px;
+  --space-s: 12px;
+  --space-m: 16px;
+  --space-l: 24px;
+  --space-xl: 32px;
+  --space-xxl: 40px;
+  --size-sidebar: 260px;
+  --size-content-max: 1440px;
+  --size-arrow-button: 56px;
+  --size-avatar: 40px;
+  --font-family: Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --font-weight-bold: 700;
+  --font-weight-medium: 500;
+  --font-weight-regular: 400;
+  --font-size-page-title: 32px;
+  --font-size-big-number: 40px;
+  --font-size-card-title: 22px;
+  --font-size-body: 18px;
+  --font-size-small: 15px;
+  --font-size-caption: 13px;
+  --shadow-soft: 0 10px 30px 0 rgba(51,38,26,0.07);
+  --shadow-page: 0 4px 12px 0 rgba(51,38,26,0.08); /** 썸네일 지면 */
+}

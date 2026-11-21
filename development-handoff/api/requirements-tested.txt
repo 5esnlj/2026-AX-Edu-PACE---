@@ -1,0 +1,8 @@
+# 검증 시 사용한 직접 의존성 및 Starlette 버전
+fastapi==0.141.1
+starlette==1.6.0
+uvicorn==0.52.1
+python-multipart==0.0.32
+httpx==0.28.1
+pydantic==2.13.4
+jsonschema==4.26.0

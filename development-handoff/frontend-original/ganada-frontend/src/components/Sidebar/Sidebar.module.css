@@ -1,0 +1,10 @@
+.sidebar { display: flex; flex-direction: column; gap: 6px; width: var(--size-sidebar); flex: 0 0 var(--size-sidebar); padding: var(--space-xl) 22px 28px; background: var(--color-surface); border-right: 1px solid var(--color-line); }
+.classSelect { display: flex; justify-content: space-between; align-items: center; padding: 10px var(--space-m); border: 0; background: none; font-size: 20px; font-weight: var(--font-weight-bold); }
+.cta { display: flex; justify-content: center; align-items: center; gap: var(--space-xs); padding: 15px 0; border: 0; border-radius: 28px; background: var(--color-primary); color: var(--color-on-primary); font-size: var(--font-size-body); font-weight: var(--font-weight-bold); }
+.nav { display: flex; flex-direction: column; gap: 6px; margin-top: 18px; }
+.item { display: flex; align-items: center; gap: 14px; padding: 13px var(--space-m); border: 0; border-radius: var(--radius-nav); background: none; font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--color-text); text-align: left; }
+.item svg { color: var(--color-text-sub); }
+.item:hover { background: var(--color-background); }
+.active, .active:hover { background: var(--color-card-red); color: var(--color-primary); font-weight: var(--font-weight-bold); }
+.active svg { color: var(--color-primary); }
+.bottom { margin-top: auto; }

@@ -1,0 +1,27 @@
+@import './tokens.css';
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root { margin: 0; height: 100%; }
+
+body {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text);
+  background: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+/* 교과·카드 색 묶음: data-tone="blue" 처럼 붙여 쓴다 */
+[data-tone='blue']   { --tone-bg: var(--color-card-blue);   --tone-title: var(--color-title-blue);   --tone-accent: var(--color-accent-blue); }
+[data-tone='yellow'] { --tone-bg: var(--color-card-yellow); --tone-title: var(--color-title-yellow); --tone-accent: var(--color-accent-yellow); }
+[data-tone='green']  { --tone-bg: var(--color-card-green);  --tone-title: var(--color-title-green);  --tone-accent: var(--color-accent-green); }
+[data-tone='orange'] { --tone-bg: var(--color-card-orange); --tone-title: var(--color-title-yellow); --tone-accent: var(--color-accent-orange); }
+[data-tone='purple'] { --tone-bg: var(--color-card-purple); --tone-title: var(--color-title-yellow); --tone-accent: var(--color-accent-purple); }
+[data-tone='red']    { --tone-bg: var(--color-card-red);    --tone-title: var(--color-primary);      --tone-accent: var(--color-primary); }
+
+button:disabled { cursor: not-allowed; opacity: 0.65; }
+select { font: inherit; color: inherit; }

@@ -1,0 +1,13 @@
+.folder { display: flex; flex-direction: column; padding: 0; border: 0; background: none; text-align: left; width: 100%; }
+.tab { width: 110px; height: 18px; border-radius: 14px 14px 0 0; background: var(--tone-bg); }
+.body {
+  display: flex; flex-direction: column; justify-content: space-between; gap: 6px;
+  height: 150px; padding: 22px; border-radius: 0 24px 24px 24px; background: var(--tone-bg);
+}
+.top { display: flex; justify-content: space-between; align-items: center; }
+.subject { font-size: var(--font-size-small); font-weight: var(--font-weight-bold); color: var(--tone-title); }
+.badge { padding: 4px 10px; border-radius: var(--radius-chip); background: var(--color-surface); font-size: 12px; font-weight: var(--font-weight-bold); }
+.strong { background: var(--color-primary); color: var(--color-on-primary); }
+.text { display: flex; flex-direction: column; gap: 4px; }
+.title { font-size: 20px; font-weight: var(--font-weight-bold); }
+.meta { font-size: 14px; color: var(--color-text-sub); }

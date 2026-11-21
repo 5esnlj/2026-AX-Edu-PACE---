@@ -1,0 +1,9 @@
+.chip {
+  padding: 7px var(--space-m);
+  border-radius: var(--radius-chip);
+  border: 1.5px solid transparent;
+  background: var(--color-background);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+}
+.selected { background: var(--color-text); color: var(--color-on-primary); font-weight: var(--font-weight-bold); }

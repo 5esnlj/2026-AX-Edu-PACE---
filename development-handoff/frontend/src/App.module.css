@@ -1,0 +1,20 @@
+.pending { display: flex; flex-direction: column; gap: 6px; padding: var(--space-m) 18px; border-radius: var(--radius-icon); background: var(--color-background); }
+.pending small { font-size: var(--font-size-small); font-weight: var(--font-weight-medium); color: var(--color-text-sub); }
+.pending span { display: flex; justify-content: space-between; align-items: center; }
+.pending b { font-size: 26px; }
+.pending em { font-style: normal; font-size: var(--font-size-small); font-weight: var(--font-weight-bold); }
+.myLevel { display: flex; flex-direction: column; gap: 14px; padding: 0 var(--space-m); }
+.myLevel small { font-size: 14px; font-weight: var(--font-weight-bold); color: var(--color-text-sub); }
+.myLevel div { display: flex; flex-direction: column; gap: var(--space-xs); }
+.myLevel span { display: flex; justify-content: space-between; }
+.myLevel em { font-style: normal; color: var(--color-text-sub); }
+.myLevel i { display: block; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--color-text) calc(var(--v) * 100%), var(--color-line) 0); }
+.login { width: min(540px, calc(100% - 32px)); margin: 60px auto; padding: 28px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-main); }
+.login h1 { color: var(--color-primary); }
+.login p { line-height: 1.6; }
+.loginForm { display: flex; flex-direction: column; gap: 16px; }
+.loginForm label { display: flex; flex-direction: column; gap: 8px; }
+.loginForm input, .loginForm select, .toolbar select, .areaSelect select { padding: 10px; border: 1px solid var(--color-border); border-radius: var(--radius-button); background: var(--color-surface); }
+.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; padding: 12px; border: 1px solid var(--color-border); border-radius: var(--radius-button); font-size: var(--font-size-small); }
+.toolbar button { margin-left: auto; font-size: var(--font-size-small); }
+.areaSelect { display: flex; align-items: center; gap: 12px; }

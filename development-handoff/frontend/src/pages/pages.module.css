@@ -1,0 +1,32 @@
+.loading { color: var(--color-text-sub); }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-left: auto; }
+.person { display: flex; align-items: center; gap: var(--space-s); }
+.personText { display: flex; flex-direction: column; }
+.personText b { font-size: var(--font-size-body); }
+.personText small { font-size: var(--font-size-caption); color: var(--color-text-sub); }
+.score { display: inline-flex; align-items: center; gap: var(--space-s); font-size: var(--font-size-small); color: var(--color-text-sub); }
+.pct { width: 40px; font-weight: var(--font-weight-bold); }
+.alert { color: var(--color-primary); }
+.warn { color: var(--color-title-yellow); }
+.sub { color: var(--color-text-sub); }
+.chev { color: var(--color-text-sub); }
+.section { display: flex; flex-direction: column; gap: var(--space-s); }
+.sectionLabel { margin: 0; font-size: 17px; font-weight: var(--font-weight-bold); color: var(--color-text-sub); }
+.sectionHead { display: flex; justify-content: space-between; align-items: center; }
+.sectionHead h2 { margin: 0; font-size: var(--font-size-card-title); }
+.sectionHead button { border: 0; background: none; font-size: 16px; font-weight: var(--font-weight-medium); color: var(--color-text-sub); }
+.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.folders { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.greetRow { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.todos { display: flex; gap: 20px; }
+.todo { display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-m); width: 280px; min-height: 184px; padding: var(--space-l); border-radius: var(--radius-main); background: var(--tone-bg); }
+.todo span { display: flex; flex-direction: column; gap: 4px; }
+.todo small { font-size: var(--font-size-small); color: var(--color-text-sub); }
+.todo b { font-size: 21px; }
+.todo button { align-self: flex-start; }
+
+.greet { display: flex; flex-direction: column; gap: 10px; }
+.greet p { margin: 0; font-size: var(--font-size-body); font-weight: var(--font-weight-medium); }
+
+@media (max-width: 1200px) { .grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .greetRow { align-items: flex-start; flex-direction: column; } .folders { grid-template-columns: repeat(2,minmax(0,1fr)); } }

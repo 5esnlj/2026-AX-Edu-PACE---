@@ -1,0 +1,29 @@
+.card { position: relative; display: flex; flex-direction: column; border-radius: var(--radius-main); isolation: isolate; }
+/* 카드 바탕: 오른쪽 아래를 파낸 모양(notch-mask.svg)으로 잘라낸다 */
+.card::before {
+  content: '';
+  position: absolute; inset: 0; z-index: -1;
+  border-radius: inherit;
+  background: var(--tone-bg);
+  -webkit-mask-image: url('../../assets/notch-mask.svg'), linear-gradient(black, black);
+  -webkit-mask-position: right -60px bottom -60px, 0 0;
+  -webkit-mask-size: 150px 150px, 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-composite: xor;
+  mask-image: url('../../assets/notch-mask.svg'), linear-gradient(black, black);
+  mask-position: right -60px bottom -60px, 0 0;
+  mask-size: 150px 150px, 100% 100%;
+  mask-repeat: no-repeat;
+  mask-composite: exclude;
+}
+.content { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.clickable { cursor: pointer; }
+.arrow {
+  position: absolute; right: 6px; bottom: 6px;
+  width: var(--size-arrow-button); height: var(--size-arrow-button);
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 50%;
+  background: var(--color-text); color: var(--color-on-primary);
+  transition: transform 0.15s ease;
+}
+.card:hover .arrow, .arrow:focus-visible { transform: scale(1.06); }

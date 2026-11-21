@@ -1,0 +1,11 @@
+.pending { display: flex; flex-direction: column; gap: 6px; padding: var(--space-m) 18px; border-radius: var(--radius-icon); background: var(--color-background); }
+.pending small { font-size: var(--font-size-small); font-weight: var(--font-weight-medium); color: var(--color-text-sub); }
+.pending span { display: flex; justify-content: space-between; align-items: center; }
+.pending b { font-size: 26px; }
+.pending em { font-style: normal; font-size: var(--font-size-small); font-weight: var(--font-weight-bold); }
+.myLevel { display: flex; flex-direction: column; gap: 14px; padding: 0 var(--space-m); }
+.myLevel small { font-size: 14px; font-weight: var(--font-weight-bold); color: var(--color-text-sub); }
+.myLevel div { display: flex; flex-direction: column; gap: var(--space-xs); }
+.myLevel span { display: flex; justify-content: space-between; }
+.myLevel em { font-style: normal; color: var(--color-text-sub); }
+.myLevel i { display: block; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--color-text) calc(var(--v) * 100%), var(--color-line) 0); }

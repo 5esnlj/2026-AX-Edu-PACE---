@@ -1,0 +1,2 @@
+.avatar { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; border-radius: 50%; background: var(--tone-bg); color: var(--tone-title); font-weight: var(--font-weight-bold); font-size: 17px; }
+.primary { background: var(--color-primary); color: var(--color-on-primary); font-size: 18px; }

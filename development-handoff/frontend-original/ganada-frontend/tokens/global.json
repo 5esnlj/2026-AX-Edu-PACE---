@@ -1,0 +1,83 @@
+{
+  "color": {
+    "primary": { "value": "#EF5044", "type": "color", "description": "로고 레드. 주요 버튼·지금 보는 메뉴·경고에만" },
+    "on-primary": { "value": "#FFFFFF", "type": "color" },
+    "background": { "value": "#FCFBFA", "type": "color", "description": "페이지 바탕" },
+    "surface": { "value": "#FFFFFF", "type": "color", "description": "카드·패널·상단바·사이드바" },
+    "text": { "value": "#26231F", "type": "color", "description": "본문 글자, 진행 막대, 선택된 칩" },
+    "text-sub": { "value": "#8A847C", "type": "color" },
+    "line": { "value": "#EFECE7", "type": "color", "description": "구분선, 진행 막대 바탕" },
+    "border": { "value": "#DDD8D1", "type": "color", "description": "보조 버튼·칩 테두리" },
+    "placeholder": { "value": "#EEEAE4", "type": "color", "description": "썸네일 글줄" },
+    "card": {
+      "red": { "value": "#FDEDEB", "type": "color" },
+      "blue": { "value": "#EAF2FB", "type": "color" },
+      "yellow": { "value": "#FFF6DC", "type": "color" },
+      "green": { "value": "#EAF5EE", "type": "color" },
+      "orange": { "value": "#FEF1E6", "type": "color" },
+      "purple": { "value": "#F3EFFA", "type": "color" },
+      "indigo": { "value": "#EEF0FB", "type": "color" }
+    },
+    "title": {
+      "blue": { "value": "#2A6FBF", "type": "color" },
+      "yellow": { "value": "#A87700", "type": "color" },
+      "green": { "value": "#21804C", "type": "color" }
+    },
+    "accent": {
+      "yellow": { "value": "#FFC93A", "type": "color" },
+      "orange": { "value": "#F7962F", "type": "color" },
+      "blue": { "value": "#3B8FE0", "type": "color" },
+      "green": { "value": "#3DBB74", "type": "color" },
+      "purple": { "value": "#9B5BD6", "type": "color" },
+      "indigo": { "value": "#4B5BD4", "type": "color" }
+    }
+  },
+  "radius": {
+    "main": { "value": "32", "type": "borderRadius", "description": "카드·패널" },
+    "button": { "value": "20", "type": "borderRadius", "description": "버튼·입력칸" },
+    "icon": { "value": "18", "type": "borderRadius", "description": "아이콘 타일·사이드바 카드" },
+    "nav": { "value": "14", "type": "borderRadius", "description": "사이드바 메뉴" },
+    "chip": { "value": "999", "type": "borderRadius" }
+  },
+  "space": {
+    "xs": { "value": "8", "type": "spacing" },
+    "s": { "value": "12", "type": "spacing" },
+    "m": { "value": "16", "type": "spacing" },
+    "l": { "value": "24", "type": "spacing" },
+    "xl": { "value": "32", "type": "spacing" },
+    "xxl": { "value": "40", "type": "spacing" }
+  },
+  "size": {
+    "sidebar": { "value": "260", "type": "sizing" },
+    "content-max": { "value": "1440", "type": "sizing" },
+    "arrow-button": { "value": "56", "type": "sizing" },
+    "avatar": { "value": "40", "type": "sizing" }
+  },
+  "font": {
+    "family": { "value": "Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif", "type": "fontFamilies" },
+    "weight": {
+      "bold": { "value": "Bold", "type": "fontWeights" },
+      "medium": { "value": "Medium", "type": "fontWeights" },
+      "regular": { "value": "Regular", "type": "fontWeights" }
+    },
+    "size": {
+      "page-title": { "value": "32", "type": "fontSizes" },
+      "big-number": { "value": "40", "type": "fontSizes" },
+      "card-title": { "value": "22", "type": "fontSizes" },
+      "body": { "value": "18", "type": "fontSizes" },
+      "small": { "value": "15", "type": "fontSizes" },
+      "caption": { "value": "13", "type": "fontSizes" }
+    }
+  },
+  "shadow": {
+    "soft": {
+      "value": { "x": "0", "y": "10", "blur": "30", "spread": "0", "color": "rgba(51,38,26,0.07)", "type": "dropShadow" },
+      "type": "boxShadow"
+    },
+    "page": {
+      "value": { "x": "0", "y": "4", "blur": "12", "spread": "0", "color": "rgba(51,38,26,0.08)", "type": "dropShadow" },
+      "type": "boxShadow",
+      "description": "썸네일 지면"
+    }
+  }
+}

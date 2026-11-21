@@ -1,0 +1,14 @@
+import type { Role } from '../types';
+export type AreaCode = 'korean' | 'math' | 'social' | 'science' | 'daily';
+export type LevelCode = 'below_beginner' | 'beginner' | 'intermediate' | 'advanced';
+export type DiagnosticState = 'not_started' | 'in_progress' | 'completed';
+export type ListOut<T> = { items: T[]; nextCursor: string | null };
+export type SessionOut = { user: { id: string; role: Role; displayName: string; nativeLanguage: string }; csrfToken: string; nextAction: 'classes' | 'diagnostic' | 'join_class' };
+export type ClassOut = { id: string; name: string; teacherSubject: AreaCode | null };
+export type PartResult = { area: AreaCode; skill: 'listening' | 'reading'; score: number; maxScore: number; level: LevelCode };
+export type AreaResult = { area: AreaCode; score: number; maxScore: number; level: LevelCode };
+export type ScoreResults = { status: DiagnosticState; questionCount: number; submittedQuestionCount: number; firstCorrectCount: number | null; firstScore: number | null; currentWrongCount: number; unansweredQuestionCount: number };
+export type TeacherDashboardOut = { classId: string; className: string; selectedArea: AreaCode; teacherSubject: AreaCode; studentCount: number; levelCounts: Record<LevelCode | 'not_diagnosed', number>; pendingReviewQuizSetCount: number; students: { studentMemberId: string; displayName: string; nativeLanguage: string; diagnosticStatus: DiagnosticState; parts: PartResult[]; aggregate: AreaResult | null; latestQuiz: ScoreResults | null }[] };
+export type SourceOut = { id: string; subject: AreaCode; unit: string; title: string; createdAt: string };
+export type MaterialOut = { id: string; subject: AreaCode; unit: string; title: string; publishedAt: string | null; createdAt: string; isRecentPublished: boolean };
+export type StudentDashboardOut = { classId: string; className: string; displayName: string; selectedArea: AreaCode; parts: PartResult[]; aggregate: AreaResult; unansweredQuestionCount: number; retryQuestionCount: number; newMaterials: MaterialOut[]; quizzes: { id: string; title: string; subject: AreaCode; progress: ScoreResults }[] };

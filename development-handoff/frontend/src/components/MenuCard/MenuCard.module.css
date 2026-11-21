@@ -1,0 +1,7 @@
+.inner { display: flex; flex-direction: column; justify-content: space-between; flex: 1; padding: 36px; }
+.title { margin: 0; font-size: 32px; font-weight: var(--font-weight-bold); color: var(--tone-title); }
+.icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 88px; height: 88px; border-radius: 26px;
+  background: var(--color-surface); color: var(--tone-accent); box-shadow: var(--shadow-soft);
+}

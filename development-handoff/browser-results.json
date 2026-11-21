@@ -1,0 +1,15 @@
+{
+  "passed": 8,
+  "checks": [
+    "teacher dashboard: live names, four levels, pending filter",
+    "teacher source cards: only own subject, source identity",
+    "switch teacher: subject restriction changes with authenticated membership",
+    "student dashboard: selected area, real data, session survives reload",
+    "real API answer state: 33% in progress → retry → complete, first score retained",
+    "request failure is visible, retry recovers",
+    "unfinished diagnostic gate",
+    "membership-required gate"
+  ],
+  "javascriptErrors": [],
+  "scope": "local mock HTTP via Vite proxy; no real DB/Solar; screenshots are not a Figma comparison"
+}
